@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate OTP</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading.active {
+            display: flex;
+        }
+        .spinner {
+            border: 8px solid #f3f3f3; /* Light grey */
+            border-top: 8px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="loading" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+    
+    <div class="w-full max-w-md bg-white p-8 shadow-lg rounded-lg">
+        <h2 class="text-2xl font-semibold text-gray-700 text-center mb-6">Enter your email to receive OTP</h2>
+        <form id="otpForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-gray-600 font-medium">Email:</label>
+                <input type="email" name="email" 
+                       value='{{ email }}'
+                       required 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       readonly>
+            </div>
+            <button type="submit" 
+                class="w-full py-2 bg-blue-500 text-white font-semibold rounded-lg hover:bg-blue-600">
+                Send OTP
+            </button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <p class="mt-4 text-center {{ 'text-green-500' if category == 'success' else 'text-red-500' }}">{{ message }}</p>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        <p class="mt-4 text-center {{ 'text-green-500' if category == 'success' else 'text-red-500' }}">{{ msg }}</p>
+    </div>
+
+    <script>
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const otpForm = document.getElementById('otpForm');
+
+        otpForm.addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+            loadingOverlay.classList.add('active'); // Show loading overlay
+
+            const formData = new FormData(otpForm);
+            fetch('/generate_otp', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text()) // Assuming the server returns HTML
+            .then(data => {
+                // You can update the page with the response data here
+                document.body.innerHTML = data; // Replace the body with the response
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+            .finally(() => {
+                loadingOverlay.classList.remove('active'); // Hide loading overlay
+            });
+        });
+    </script>
+</body>
+</html>
