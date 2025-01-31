@@ -21,6 +21,7 @@ import pandas as pd
 app = Flask(__name__, static_folder='static')
 from geopy.distance import geodesic
 
+
 AISSMS_COORDINATES = (18.505437627232865, 73.95293901495018)
 
 @app.after_request
@@ -47,6 +48,19 @@ app.config['MAIL_PASSWORD'] = 'eggi fpqq yrbb hnqt'   # Replace with your passwo
 
 mail = Mail(app)
 
+
+from datetime import timedelta
+
+class AttendancePost(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    subject = db.Column(db.String(200), nullable=False)
+    date_time = db.Column(db.DateTime, nullable=False)
+    batch = db.Column(db.String(20), nullable=False)
+    posted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
+    def is_active(self):
+        return datetime.utcnow() < self.expires_at
 
 class Authenticate(db.Model, UserMixin):
     sno = db.Column(db.Integer, primary_key=True)
@@ -91,6 +105,11 @@ class AttendanceRecord(db.Model):
     email = db.Column(db.String(200),nullable=False)
     present = db.Column(db.String(1),default='n') # n means absent
 
+class OTPRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    roll_no = db.Column(db.String(20), nullable=False)  # Username or roll number
+    otp = db.Column(db.String(6), nullable=False)  # The OTP itself
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)  # Timestamp of when the OTP was created
 
 class TeacherMap(db.Model):
     sno = db.Column(db.Integer, primary_key=True)
@@ -471,11 +490,26 @@ def submitAttendance():
 def verify_otp():
     if request.method == 'POST':
         entered_otp = request.form['otp']
-        if entered_otp == session.get('otp'):
-            session.pop('otp', None)  # Clear OTP from session after verification
-            return redirect(url_for('attendance_success'))
+        roll_no = current_user.username  # Get the current user's roll number
+        created_at = session.get('otp_created_at')  # Get the created_at timestamp from the session
+
+        # Ensure created_at is in the correct format
+        if created_at:
+            # Convert created_at back to a datetime object
+            created_at_datetime = datetime.fromisoformat(created_at)
+
+            # Retrieve the OTP record from the database
+            otp_record = OTPRecord.query.filter_by(roll_no=roll_no, created_at=created_at_datetime).first()
+
+            if otp_record and otp_record.otp == entered_otp:
+                db.session.delete(otp_record)  # Optionally delete the OTP record after successful verification
+                db.session.commit()
+                session.pop('otp_created_at', None)  # Clear created_at from session
+                return redirect(url_for('attendance_success'))
+            else:
+                flash('Invalid OTP. Please try again.', 'danger')
         else:
-            flash('Invalid OTP. Please try again.', 'danger')
+            flash('No OTP session found. Please request a new OTP.', 'danger')
 
     return render_template('verify_otp.html')
 
@@ -557,6 +591,118 @@ def fetch_lectures():
 
     # Return the data in JSON format
     return jsonify({"slotsData": slots_data}), 200
+
+
+@app.route("/admin_page", methods=['GET', 'POST'])
+@login_required
+def admin_page():
+    # Check if the current user has the admin role
+    if current_user.role != 'admin':
+        return render_template('access_denied.html', message="You cannot access this page.")
+    
+    subjects = TeacherMap.query.filter_by(teacherName=current_user.username).all()
+    return render_template('admin_page.html', u_name=current_user.username, subjects=subjects)
+
+# @app.route("/post_attendance")
+# def post_attendance():
+#     selected_date = request.form.get('selectedDate')
+#     selected_type = request.form.get('selectedType')  # 'Lecture', 'Batch1', 'Batch2', 'Batch3'
+    
+#     # Fetch students based on selected type
+#     if selected_type == 'Lecture':
+#         students = Student.query.all()  # All students for lecture
+#     else:
+#         students = Student.query.filter_by(batch=selected_type).all()  # Filter by batch
+
+#     # Send OTP to each student
+#     for student in students:
+#         otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])  # Generate a 6-digit OTP
+#         msg = Message(
+#             subject='Attendance System OTP Verification',
+#             sender=('Attendance System', 'attendance-admin@gmail.com'),
+#             recipients=[student.email]
+#         )
+#         msg.body = f'Your OTP for marking attendance is: {otp}.'
+#         try:
+#             mail.send(msg)
+#         except Exception as e:
+#             print(f"Error sending OTP to {student.email}: {e}")
+
+#     flash('OTPs sent to students successfully!', 'success')
+#     return redirect(url_for('admin_page'))
+@app.route("/post_attendance", methods=['POST'])
+@login_required
+def post_attendance():
+    try:
+        subject = request.form['subject']
+        date_time_str = request.form['date_time']  # Get the date_time as a string
+        batch = request.form['batch']
+
+        # Validate inputs
+        if not subject or not date_time_str or not batch:
+            flash('All fields are required!', 'danger')
+            return redirect(url_for('admin_page'))
+
+        # Convert date_time string to a datetime object
+        date_time = datetime.fromisoformat(date_time_str)
+
+        # Create an AttendancePost record
+        expires_at = datetime.utcnow() + timedelta(minutes=10)
+        attendance_post = AttendancePost(
+            subject=subject,
+            date_time=date_time,
+            batch=batch,
+            expires_at=expires_at
+        )
+        db.session.add(attendance_post)
+        db.session.commit()
+
+        # Fetch students in the selected batch
+        students = Student.query.filter_by(batch=batch).all()
+        for student in students:
+            otp = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            msg = Message(
+                subject='Attendance System OTP Verification',
+                sender=('Attendance System', 'attendance-admin@gmail.com'),
+                recipients=[student.email]
+            )
+            msg.body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.'
+            try:
+                mail.send(msg)
+                # Create an OTP record with the correct datetime object
+                otp_record = OTPRecord(roll_no=student.roll_no, otp=otp, created_at=date_time)
+                db.session.add(otp_record)
+            except Exception as e:
+                print(f"Error sending OTP to {student.email}: {e}")
+
+        db.session.commit()  # Commit the OTP records after sending all OTPs
+        flash('Attendance posted successfully and OTPs sent to students!', 'success')
+        return redirect(url_for('admin_page'))
+
+    except Exception as e:
+        print(f"Error in post_attendance: {e}")
+        flash('An error occurred while posting attendance. Please try again.', 'danger')
+        return redirect(url_for('admin_page'))
+@app.route("/view_attendance")
+@login_required
+def view_attendance():
+    student = Student.query.filter(Student.roll_no == current_user.username).first()
+
+    # Check if the student exists and has a batch
+    if student and student.batch:
+        # Fetch attendance records for the student's batch and for 'Lecture'
+        attendance_records = AttendancePost.query.filter(
+            (AttendancePost.batch == student.batch) | 
+            (AttendancePost.batch == 'Lecture')
+        ).all()
+
+    return render_template('view_attendance.html', records=attendance_records)
+
+@app.route('/mark_attendance', methods=['POST'])
+@login_required
+def mark_attendance():
+    session['otp_created_at'] = request.form.get('date_time')
+    return render_template('newMarkAttendance.html')
 
 
 if __name__ == "__main__":

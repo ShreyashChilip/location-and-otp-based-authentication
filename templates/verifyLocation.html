@@ -32,19 +32,13 @@
                         document.getElementById('result').textContent = data.message;
 
                         if (data.status === 'success') {
-                            let countdown = 3;
-                            const redirectMessage = document.getElementById('redirectMessage');
-                            redirectMessage.textContent = `Redirecting to OTP verification in ${countdown} seconds...`;
+                            // Notify the parent window that location is verified
+                            window.parent.postMessage("location_verified", "*");
 
-                            const interval = setInterval(() => {
-                                countdown -= 1;
-                                redirectMessage.textContent = `Redirecting to OTP verification in ${countdown} seconds...`;
-
-                                if (countdown === 0) {
-                                    clearInterval(interval);
-                                    window.location.href = '/generate_otp';  // Replace with the actual OTP verification page route
-                                }
-                            }, 1000);
+                            // Display a message indicating successful verification
+                            document.getElementById('redirectMessage').textContent = "Location verified successfully! You can now proceed to enter the OTP.";
+                        } else {
+                            document.getElementById('redirectMessage').textContent = "Location verification failed. Please try again.";
                         }
                     })
                     .catch(error => {
