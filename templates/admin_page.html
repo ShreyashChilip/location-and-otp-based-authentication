@@ -6,6 +6,51 @@ Post Attendance
 <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 
 <style>
+
+.formcs {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      gap: 10px;
+  }
+  .modalcs {
+    width: 90%;
+    max-width: 450px;
+    background: linear-gradient(180deg, #90EE90 0%, #FFFFFF 30.21%);
+    box-shadow: 0px 187px 75px rgba(0, 0, 0, 0.01), 0px 105px 63px rgba(0, 0, 0, 0.05), 0px 47px 47px rgba(0, 0, 0, 0.09), 0px 12px 26px rgba(0, 0, 0, 0.1), 0px 0px 0px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    margin: 0;
+
+    position: fixed; /* Position the modalcs fixed in the viewport */
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Adjust the position by translating 50% back */
+
+    z-index: -1; /* Set a higher z-index to ensure it's above other elements */
+    padding: 20px;
+  }
+  .bannercs {
+    width: 100%;
+    height: 30px;
+    margin: 0;
+    background-size: 100%;
+    background-repeat: no-repeat;
+  }
+  .modalcs--footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px;
+      border-top: 1px solid #ebebec;
+  }
+
   .verified {
     color: green;
     font-weight: bold;
@@ -16,6 +61,7 @@ Post Attendance
     border: 1px solid #ccc;
     margin-top: 20px;
   }
+
   .loading {
     display: none;
     position: fixed;
@@ -28,6 +74,24 @@ Post Attendance
     justify-content: center;
     align-items: center;
   }
+    .lexend-zetta-unique{
+    font-family: "Lexend Zetta", serif;
+    font-optical-sizing: 20;
+    font-weight: 900;
+    font-style: normal;
+  }
+  .funnel-display-unique {
+    font-family: "Funnel Display", serif;
+    font-optical-sizing: auto;
+    font-weight: bolder;
+    font-style: normal;
+  }
+  .geist-mono-unique {
+            font-family: "Geist Mono", serif;
+            font-optical-sizing: auto;
+            font-weight: bolder; /* Replace with desired weight */
+            font-style: normal;
+        }
   .loading.active {
     display: flex;
   }
@@ -42,6 +106,28 @@ Post Attendance
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .modalcs {
+      width: 90%;
+      padding: 10px;
+    }
+    .formcs {
+      width: 100%;
+      gap: 5px;
+    }
+  }
+  @media (max-width: 480px) {
+    .modalcs {
+      width: 95%;
+      padding: 5px;
+    }
+    .formcs {
+      width: 100%;
+      gap: 5px;
+    }
   }
 </style>
 
@@ -61,12 +147,14 @@ Post Attendance
       {% endfor %}
     {% endif %}
   {% endwith %}
-  <form method="POST" action="{{ url_for('post_attendance') }}" class="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
-    <h4 class="text-xl font-semibold mb-4">Post Attendance</h4>
+  <div class="modalcs"> 
+  <form method="POST" action="{{ url_for('post_attendance') }}" class="formcs max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="bannercs"></div>
+    <h4 class="text-xl geist-mono-unique mb-4">Post Attendance</h4>
 
     <div class="form-group mb-4">
-        <label for="selectSubject" class="block text-sm font-medium">Select Subject</label>
-        <select class="custom-select mt-1 block w-full" id="selectSubject" name="subject" required>
+        <label for="selectSubject" class="block text-sm lexend-zetta-unique">Select Subject</label>
+        <select class="custom-select funnel-display-unique mt-1 block w-full" id="selectSubject" name="subject" required>
             <option value="">Select Subject</option>
             {% for subject in subjects %}
                 <option value="{{ subject.subject }}">{{ subject.subject }}</option>
@@ -75,13 +163,13 @@ Post Attendance
     </div>
 
     <div class="form-group mb-4">
-        <label for="dateTime" class="block text-sm font-medium">Date and Time</label>
-        <input type="datetime-local" id="dateTime" name="date_time" class="mt-1 block w-full border-gray-300 rounded-md" required />
+        <label for="dateTime" class="block text-sm lexend-zetta-unique">Date and Time</label>
+        <input type="datetime-local" id="dateTime" name="date_time" class="mt-1 funnel-display-unique block w-full border-gray-300 rounded-md" required />
     </div>
 
     <div class="form-group mb-4">
-        <label for="selectBatch" class="block text-sm font-medium">Select Batch</label>
-        <select class="custom-select mt-1 block w-full" id="selectBatch" name="batch" required>
+        <label for="selectBatch" class="block text-sm lexend-zetta-unique">Select Batch</label>
+        <select class="custom-select funnel-display-unique mt-1 block w-full" id="selectBatch" name="batch" required>
             <option value="">Select lecture/batch</option>
             <option value="Lecture">Lecture</option>
             <option value="1">Batch 1</option>
@@ -93,11 +181,8 @@ Post Attendance
 
     <button type="submit" class="btn btn-primary w-full">Post Attendance</button>
 </form>
-
+  </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.4/xlsx.full.min.js"></script>
-
-
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-
 {% endblock body %}

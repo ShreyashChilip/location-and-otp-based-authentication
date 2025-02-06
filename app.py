@@ -171,7 +171,7 @@ def home():
 @app.route("/showAdmin")
 @login_required
 def showAdmin():
-    return render_template("admin.html") 
+    return render_template("admin_page.html") 
 
 @app.route("/logout")
 @login_required
@@ -683,6 +683,7 @@ def post_attendance():
         print(f"Error in post_attendance: {e}")
         flash('An error occurred while posting attendance. Please try again.', 'danger')
         return redirect(url_for('admin_page'))
+
 @app.route("/view_attendance")
 @login_required
 def view_attendance():
@@ -695,7 +696,6 @@ def view_attendance():
             (AttendancePost.batch == student.batch) | 
             (AttendancePost.batch == 'Lecture')
         ).all()
-
     return render_template('view_attendance.html', records=attendance_records)
 
 @app.route('/mark_attendance', methods=['POST'])
