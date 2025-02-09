@@ -22,7 +22,7 @@ app = Flask(__name__, static_folder='static')
 from geopy.distance import geodesic
 
 
-AISSMS_COORDINATES = (18.505437627232865, 73.95293901495018)
+AISSMS_COORDINATES = (18.503183, 73.949931)
 
 @app.after_request
 def add_header(response):
@@ -100,6 +100,7 @@ class AttendanceRecord(db.Model):
     date = db.Column(db.Date,nullable=False)
     batch = db.Column(db.String(20),nullable=False)
     slot = db.Column(db.String(200),nullable=False)
+    subject = db.Column(db.String(200),nullable=False)
     roll_no = db.Column(db.String(20),nullable=False)
     name = db.Column(db.String(200),nullable=False)
     email = db.Column(db.String(200),nullable=False)
@@ -491,26 +492,19 @@ def verify_otp():
     if request.method == 'POST':
         entered_otp = request.form['otp']
         roll_no = current_user.username  # Get the current user's roll number
-        created_at = session.get('otp_created_at')  # Get the created_at timestamp from the session
-
-        # Ensure created_at is in the correct format
-        if created_at:
-            # Convert created_at back to a datetime object
-            created_at_datetime = datetime.fromisoformat(created_at)
-
+        
             # Retrieve the OTP record from the database
-            otp_record = OTPRecord.query.filter_by(roll_no=roll_no, created_at=created_at_datetime).first()
-
-            if otp_record and otp_record.otp == entered_otp:
-                db.session.delete(otp_record)  # Optionally delete the OTP record after successful verification
-                db.session.commit()
-                session.pop('otp_created_at', None)  # Clear created_at from session
-                return redirect(url_for('attendance_success'))
-            else:
-                flash('Invalid OTP. Please try again.', 'danger')
+        otp_record = OTPRecord.query.filter_by(roll_no=roll_no).first()
+        print(f"roll_no: {roll_no}")
+        print(f"otp_record: {otp_record}")
+        if otp_record and otp_record.otp == entered_otp:
+            db.session.delete(otp_record)  # Optionally delete the OTP record after successful verification
+            db.session.commit()
+            session.pop('otp_created_at', None)  # Clear created_at from session
+            return redirect(url_for('attendance_success'))
         else:
-            flash('No OTP session found. Please request a new OTP.', 'danger')
-
+            flash('Invalid OTP. Please try again.', 'danger')
+       
     return render_template('verify_otp.html')
 
 
@@ -634,10 +628,21 @@ def admin_page():
 @login_required
 def post_attendance():
     try:
-        subject = request.form['subject']
-        date_time_str = request.form['date_time']  # Get the date_time as a string
-        batch = request.form['batch']
+        
+        subject = request.form.get('subject', '').strip()
+        date_time_str = request.form.get('date_time', '').strip()  # Get the date_time as a string
+        batch = request.form.get('batch', '').strip()
+        print(batch)
+        print(subject)
+        if not subject or not date_time_str or not batch:
+            # Handle the error (e.g., return an error message)
+            return "Error: Missing required fields."
 
+        if batch == 'Lecture':
+            subject += ' - LEC'
+        else:
+            subject += f' - PR - {batch}'
+        print(subject)
         # Validate inputs
         if not subject or not date_time_str or not batch:
             flash('All fields are required!', 'danger')
@@ -696,13 +701,102 @@ def view_attendance():
             (AttendancePost.batch == student.batch) | 
             (AttendancePost.batch == 'Lecture')
         ).all()
+
     return render_template('view_attendance.html', records=attendance_records)
+
+
+from datetime import datetime
 
 @app.route('/mark_attendance', methods=['POST'])
 @login_required
 def mark_attendance():
-    session['otp_created_at'] = request.form.get('date_time')
-    return render_template('newMarkAttendance.html')
+    record_id = request.form.get('record_id')
+    date_time = request.form.get('date_time')
+    subject = request.form.get('subject')
+
+    # Convert the date_time string to a datetime object
+    date_time_obj = datetime.fromisoformat(date_time)
+
+    # Format the date and time
+    formatted_date = date_time_obj.strftime('%B %d, %Y')  # e.g., February 01, 2025
+    formatted_time = date_time_obj.strftime('%I:%M %p')   # e.g., 01:13 AM
+
+    # Render the newMarkAttendance.html template with the formatted data
+    return render_template('newMarkAttendance.html', record_id=record_id, formatted_date=formatted_date, formatted_time=formatted_time, subject=subject)
+
+@app.route('/submit_user_attendance', methods=['POST'])
+@login_required
+def submit_user_attendance():
+    # Check if both flags are set
+    otp_verified = session.get('otp_verified', False)
+    location_verified = session.get('location_flag', False)
+
+    if otp_verified and location_verified:
+        # Both flags are set, proceed to mark attendance
+        rollno = current_user.username
+        record1 = Student.query.filter_by(roll_no=rollno).first()
+        
+        if not record1:
+            return jsonify({'status': 'failed', 'message': 'Student record not found.'})
+
+        u_name = record1.name
+        email = record1.email
+        formatted_time = request.form.get('formatted_time')
+        # Get the parameters from the request
+        # Assuming date_time_str is the string you received from the form
+        date_time_str = request.form.get('formatted_date', '').strip()  # Get the date_time as a string
+
+        try:
+            # Parse the date string using strptime with the correct format
+            formatted_date = datetime.strptime(date_time_str, '%B %d, %Y')
+        except ValueError as e:
+            # Handle the error (e.g., return an error message)
+            return f"Error: {e}"
+        subject = request.form.get('subject')
+
+        # Split the subject to determine type and batch
+        subject_parts = subject.split(' - ')
+        if len(subject_parts) < 2:
+            return jsonify({'status': 'failed', 'message': 'Invalid subject format.'})
+
+        subject_name = subject_parts[0]
+        attendance_type = subject_parts[1]  # LEC or PR
+        batch = None
+
+        # Determine batch if it's a practical
+        if attendance_type == 'PR' and len(subject_parts) == 3:
+            batch = subject_parts[2]  # This should be the batch number
+
+        # Prepare the attendance record
+        new_attendance = AttendanceRecord(
+            date=formatted_date,  # Use the formatted date
+            batch=batch if batch else 'Lecture',  # Default to 'Lecture' if no batch
+            slot=formatted_time,  # Use the formatted time as the slot
+            subject = subject_name,
+            roll_no=rollno,
+            name=u_name,
+            email=email,
+            present='y'  # Mark as present
+        )
+        
+        # Insert into the database
+        db.session.add(new_attendance)
+        db.session.commit()
+
+        # Clear the flags from the session
+        session.pop('otp_verified', None)
+        session.pop('location_flag', None)
+
+        flash('Attendance marked successfully!', 'success')
+        return jsonify({'status': 'success', 'message': 'Attendance marked successfully.'})
+    else:
+        # One or both flags are not set, return an appropriate message
+        if not otp_verified:
+            return jsonify({'status': 'failed', 'message': 'OTP not verified. Please verify your OTP.'})
+        if not location_verified:
+            return jsonify({'status': 'failed', 'message': 'Location not verified. Please verify your location.'})
+
+    return jsonify({'status': 'failed', 'message': 'Unknown error occurred.'})
 
 
 if __name__ == "__main__":

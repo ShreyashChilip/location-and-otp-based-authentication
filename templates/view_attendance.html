@@ -89,6 +89,8 @@ Attendance Records
                         <form method="POST" action="{{ url_for('mark_attendance') }}">
                             <input type="hidden" name="record_id" value="{{ record.id }}">
                             <input type="hidden" name="date_time" value="{{ record.date_time.isoformat() }}"> <!-- Send date_time -->
+                            <input type="hidden" name="record_id" value="{{ record.id }}">
+                            <input type="hidden" name="subject" value="{{ record.subject }}">
                             <button type="submit" class="btn btn-primary">Mark Attendance</button>
                         </form>
                     {% else %}

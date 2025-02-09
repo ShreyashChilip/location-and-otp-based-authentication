@@ -1,51 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Verification</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        .iframe-container {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        iframe {
-            width: 48%;
-            height: 500px;
-            border: 1px solid #ccc;
-        }
-    </style>
-</head>
-<body class="bg-gray-100 h-screen flex flex-col items-center">
-    <h2 class="text-2xl font-semibold mt-4">Mark Attendance for:</h2>
-    <p id="lectureDetails" class="text-lg mb-4"></p>
-
-    <div class="iframe-container">
-        <iframe id="locationIframe" src="/initVerifyLocation" title="Verify Location"></iframe>
-        <iframe id="otpIframe" src="/verify_otp" title="Verify OTP" disabled></iframe>
+{% extends 'base.html' %}
+{% block title %}Attendance Verification{% endblock title %}
+{% block body %}
+    <h2 class="text-2xl font-semibold mt-4 text-center">Mark Attendance for:</h2>
+    <div class="container my-3">
+        <div class="alert alert-info">
+            <p><strong>Date:</strong> {{ formatted_date }}</p>
+            <p><strong>Time:</strong> {{ formatted_time }}</p>
+            <p><strong>Subject:</strong> {{ subject }}</p>
+        </div>
+    
+        <div class="row row-cols-1 row-cols-md-2">
+            <div class="col mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Verify Location</h4>
+                        <iframe id="locationIframe" src="/initVerifyLocation" title="Verify Location" class="w-100" style="height: 400px; border: 1px solid #ccc;"></iframe>
+                    </div>
+                </div>
+            </div>
+            <div class="col mb-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h4 class="card-title">Verify OTP</h4>
+                        <iframe id="otpIframe" src="/verify_otp" title="Verify OTP" class="w-100" style="height: 400px; border: 1px solid #ccc;"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <div class="text-center">
+            <button id="submitAttendance" class="btn btn-primary">Submit Attendance</button>
+        </div>
     </div>
 
     <script>
-        // Set lecture details dynamically
-        const lectureDetails = {
-            subject: "Mathematics",
-            batch: "IF1",
-            date: "2023-10-10",
-            time: "10:00 AM"
-        };
-
-        document.getElementById('lectureDetails').textContent = 
-            `Subject: ${lectureDetails.subject}, Batch: ${lectureDetails.batch}, Date: ${lectureDetails.date}, Time: ${lectureDetails.time}`;
-
-        // Listen for messages from the location iframe
-        window.addEventListener("message", function(event) {
-            if (event.data === "location_verified") {
-                document.getElementById("otpIframe").disabled = false; // Enable OTP iframe
-                document.getElementById("otpIframe").contentWindow.location.reload(); // Reload OTP iframe
-            }
-        }, false);
+        document.getElementById("submitAttendance").addEventListener("click", function() {
+            fetch("/submit_user_attendance", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    formatted_date: "{{ formatted_date }}",
+                    formatted_time: "{{ formatted_time }}",
+                    subject: "{{ subject }}"
+                })
+            })
+            .then(response => response.json())
+            .then(data => alert(data.message))
+            .catch(error => alert("An error occurred: " + error));
+        });
     </script>
-</body>
-</html>
+{% endblock body %}
