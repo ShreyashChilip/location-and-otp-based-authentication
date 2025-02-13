@@ -20,9 +20,9 @@ from flask_mail import Mail, Message
 import pandas as pd
 app = Flask(__name__, static_folder='static')
 from geopy.distance import geodesic
+import requests
 
-
-AISSMS_COORDINATES = (18.503183, 73.949931)
+AISSMS_COORDINATES = (18.503190 , 73.948462)
 
 @app.after_request
 def add_header(response):
@@ -78,6 +78,7 @@ class Student(db.Model):
     name = db.Column(db.String(200), nullable=False)
     email = db.Column(db.String(200), unique=True, nullable=False)
     batch = db.Column(db.Integer, unique=False, nullable = False)
+    phone_no = db.Column(db.String, unique=True, nullable = False)
     def __repr__(self):
         return f"{self.roll_number} - {self.name}"
 
@@ -109,6 +110,7 @@ class AttendanceRecord(db.Model):
 class OTPRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     roll_no = db.Column(db.String(20), nullable=False)  # Username or roll number
+    subject = db.Column(db.String(200))
     otp = db.Column(db.String(6), nullable=False)  # The OTP itself
     created_at = db.Column(db.DateTime, default=datetime.utcnow)  # Timestamp of when the OTP was created
 
@@ -491,16 +493,16 @@ def submitAttendance():
 def verify_otp():
     if request.method == 'POST':
         entered_otp = request.form['otp']
+        subject = request.form.get('subject')
         roll_no = current_user.username  # Get the current user's roll number
-        
+        subject_parts = subject.split(' - ')
+        subject_name = subject_parts[0]
             # Retrieve the OTP record from the database
-        otp_record = OTPRecord.query.filter_by(roll_no=roll_no).first()
+        otp_record = OTPRecord.query.filter_by(roll_no=roll_no,subject = subject_name).first()
         print(f"roll_no: {roll_no}")
         print(f"otp_record: {otp_record}")
         if otp_record and otp_record.otp == entered_otp:
-            db.session.delete(otp_record)  # Optionally delete the OTP record after successful verification
-            db.session.commit()
-            session.pop('otp_created_at', None)  # Clear created_at from session
+            
             return redirect(url_for('attendance_success'))
         else:
             flash('Invalid OTP. Please try again.', 'danger')
@@ -634,6 +636,7 @@ def post_attendance():
         batch = request.form.get('batch', '').strip()
         print(batch)
         print(subject)
+        s = subject
         if not subject or not date_time_str or not batch:
             # Handle the error (e.g., return an error message)
             return "Error: Missing required fields."
@@ -671,11 +674,20 @@ def post_attendance():
                 sender=('Attendance System', 'attendance-admin@gmail.com'),
                 recipients=[student.email]
             )
+            phone_no = student.phone_no
+            api_url = f"https://2factor.in/API/V1/858b5562-ea2e-11ef-8b17-0200cd936042/SMS/{phone_no}/{otp}"
+                
             msg.body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.'
             try:
                 mail.send(msg)
+                # Make the GET request to the external API
+                response = requests.get(api_url)
+                
+                # Check if the request was successful
+                if response.status_code == 200:
+                    print('OTP Sent to mobile successfully')#####################
                 # Create an OTP record with the correct datetime object
-                otp_record = OTPRecord(roll_no=student.roll_no, otp=otp, created_at=date_time)
+                otp_record = OTPRecord(roll_no=student.roll_no, subject=s, otp=otp, created_at=date_time)
                 db.session.add(otp_record)
             except Exception as e:
                 print(f"Error sending OTP to {student.email}: {e}")
@@ -727,12 +739,10 @@ def mark_attendance():
 @app.route('/submit_user_attendance', methods=['POST'])
 @login_required
 def submit_user_attendance():
-    # Check if both flags are set
     otp_verified = session.get('otp_verified', False)
     location_verified = session.get('location_flag', False)
 
     if otp_verified and location_verified:
-        # Both flags are set, proceed to mark attendance
         rollno = current_user.username
         record1 = Student.query.filter_by(roll_no=rollno).first()
         
@@ -741,63 +751,56 @@ def submit_user_attendance():
 
         u_name = record1.name
         email = record1.email
-        formatted_time = request.form.get('formatted_time')
-        # Get the parameters from the request
-        # Assuming date_time_str is the string you received from the form
-        date_time_str = request.form.get('formatted_date', '').strip()  # Get the date_time as a string
+
+        data = request.get_json()  # Correctly get JSON data from the request
+        formatted_time = data.get('formatted_time')
+        date_time_str = data.get('formatted_date', '').strip()
 
         try:
-            # Parse the date string using strptime with the correct format
             formatted_date = datetime.strptime(date_time_str, '%B %d, %Y')
         except ValueError as e:
-            # Handle the error (e.g., return an error message)
-            return f"Error: {e}"
-        subject = request.form.get('subject')
+            return jsonify({'status': 'failed', 'message': f'Error: {str(e)}'})  # Always return JSON
 
-        # Split the subject to determine type and batch
+        subject = data.get('subject')
+
         subject_parts = subject.split(' - ')
         if len(subject_parts) < 2:
             return jsonify({'status': 'failed', 'message': 'Invalid subject format.'})
 
         subject_name = subject_parts[0]
-        attendance_type = subject_parts[1]  # LEC or PR
+        attendance_type = subject_parts[1]
         batch = None
 
-        # Determine batch if it's a practical
         if attendance_type == 'PR' and len(subject_parts) == 3:
-            batch = subject_parts[2]  # This should be the batch number
+            batch = subject_parts[2]
 
-        # Prepare the attendance record
+        print(formatted_date, batch, formatted_time, subject_name, rollno, email)
+
         new_attendance = AttendanceRecord(
-            date=formatted_date,  # Use the formatted date
-            batch=batch if batch else 'Lecture',  # Default to 'Lecture' if no batch
-            slot=formatted_time,  # Use the formatted time as the slot
-            subject = subject_name,
+            date=formatted_date,
+            batch=batch if batch else 'Lecture',
+            slot=formatted_time,
+            subject=subject_name,
             roll_no=rollno,
             name=u_name,
             email=email,
-            present='y'  # Mark as present
+            present='y'
         )
         
-        # Insert into the database
         db.session.add(new_attendance)
         db.session.commit()
 
-        # Clear the flags from the session
         session.pop('otp_verified', None)
         session.pop('location_flag', None)
-
-        flash('Attendance marked successfully!', 'success')
+        flash('Attendance marked successfully!','success')
         return jsonify({'status': 'success', 'message': 'Attendance marked successfully.'})
     else:
-        # One or both flags are not set, return an appropriate message
         if not otp_verified:
             return jsonify({'status': 'failed', 'message': 'OTP not verified. Please verify your OTP.'})
         if not location_verified:
             return jsonify({'status': 'failed', 'message': 'Location not verified. Please verify your location.'})
 
     return jsonify({'status': 'failed', 'message': 'Unknown error occurred.'})
-
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -34,6 +34,12 @@
     </div>
 
     <script>
+        document.getElementById("otpIframe").onload = function() {
+            const subject = "{{ subject }}";
+            const iframe = document.getElementById("otpIframe");
+            iframe.contentWindow.postMessage({ subject: subject }, "*");
+        };
+    
         document.getElementById("submitAttendance").addEventListener("click", function() {
             fetch("/submit_user_attendance", {
                 method: "POST",
@@ -45,8 +51,16 @@
                 })
             })
             .then(response => response.json())
-            .then(data => alert(data.message))
+            .then(data => {
+                if(data.status  === 'failed'){
+                    alert(data.message);
+                }
+                if (data.status === 'success') {
+                    window.location.replace("/home");  // Redirect to homepage without history
+                }
+            })
             .catch(error => alert("An error occurred: " + error));
         });
     </script>
+    
 {% endblock body %}
