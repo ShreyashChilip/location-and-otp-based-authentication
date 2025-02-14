@@ -21,8 +21,14 @@ import pandas as pd
 app = Flask(__name__, static_folder='static')
 from geopy.distance import geodesic
 import requests
+import keys
+from twilio.rest import Client
+account_sid = keys.account_sid
+auth_token = keys.auth_token
+client = Client(account_sid, auth_token)
 
-AISSMS_COORDINATES = (18.503190 , 73.948462)
+
+AISSMS_COORDINATES = (18.505423 , 73.952885)
 
 @app.after_request
 def add_header(response):
@@ -675,18 +681,17 @@ def post_attendance():
                 recipients=[student.email]
             )
             phone_no = student.phone_no
-            api_url = f"https://2factor.in/API/V1/858b5562-ea2e-11ef-8b17-0200cd936042/SMS/{phone_no}/{otp}"
+            
                 
             msg.body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.'
             try:
                 mail.send(msg)
-                # Make the GET request to the external API
-                response = requests.get(api_url)
-                
-                # Check if the request was successful
-                if response.status_code == 200:
-                    print('OTP Sent to mobile successfully')#####################
-                # Create an OTP record with the correct datetime object
+                message = client.messages.create(
+                    from_= keys.twilio_number,
+                    body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.',
+                    to=phone_no
+                )
+                print('OTP sent successfully',message.sid)
                 otp_record = OTPRecord(roll_no=student.roll_no, subject=s, otp=otp, created_at=date_time)
                 db.session.add(otp_record)
             except Exception as e:

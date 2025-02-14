@@ -12,7 +12,7 @@
         <form action="/verify_otp" method="post" class="space-y-4">
             <div> 
                 <label for="otp" class="block text-gray-600 font-medium">OTP:</label>
-                <input type="text" name="otp" required 
+                <input type="text" name="otp" id="otpInput" required 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
             <input type="hidden" name="subject" id="subjectInput">
@@ -31,14 +31,7 @@
     </div>
 
     <script>
-        // Listen for messages from the parent page
-        window.addEventListener("message", function(event) {
-            // Check if the message contains the subject
-            if (event.data.subject) {
-                // Set the subject in the hidden input field
-                document.getElementById("subjectInput").value = event.data.subject;
-            }
-        });
+        
     </script>
 </body>
 </html>

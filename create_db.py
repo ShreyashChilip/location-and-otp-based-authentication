@@ -90,7 +90,7 @@ with app.app_context():
                     name=row['name'],
                     email = row['email'],
                     batch = row['batch'],
-                    phone_no = row['phone_no']
+                    phone_no = '+91' + str(row['phone_no'])
                 )
                 db.session.add(student)
 
