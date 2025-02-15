@@ -503,6 +503,7 @@ def verify_otp():
         roll_no = current_user.username  # Get the current user's roll number
         subject_parts = subject.split(' - ')
         subject_name = subject_parts[0]
+        print(subject_name)
             # Retrieve the OTP record from the database
         otp_record = OTPRecord.query.filter_by(roll_no=roll_no,subject = subject_name).first()
         print(f"roll_no: {roll_no}")
@@ -688,7 +689,7 @@ def post_attendance():
                 mail.send(msg)
                 message = client.messages.create(
                     from_= keys.twilio_number,
-                    body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.',
+                    body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.\n@humble-space-goggles-gwqp6q65wpr2wxgj-5000.app.github.dev #{otp}',
                     to=phone_no
                 )
                 print('OTP sent successfully',message.sid)

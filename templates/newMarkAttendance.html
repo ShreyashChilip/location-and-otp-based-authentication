@@ -34,15 +34,6 @@
     </div>
 
     <script>
-        // Send subject to the iframe when it loads
-        document.getElementById("otpIframe").onload = function() {
-            const subject = "{{ subject }}";
-            
-            const iframe = document.getElementById("otpIframe");
-            iframe.contentWindow.postMessage({ subject: subject }, "*");
-            
-        };
-
         // Submit attendance
         document.getElementById("submitAttendance").addEventListener("click", function() {
             fetch("/submit_user_attendance", {
@@ -65,35 +56,34 @@
             })
             .catch(error => alert("An error occurred: " + error));
         });
+    // Automatically read OTP from SMS
+    if ('OTPCredential' in window) {
+        console.log('OTPCredential API is supported.');
 
-        // Automatically read OTP from SMS
-        if ('OTPCredential' in window) {
-            console.log('OTPCredential API is supported.');
+        // Wait for the iframe to load before attempting to read the OTP
+        document.getElementById("otpIframe").onload = function() {
+            navigator.credentials.get({
+                otp: { transport: ['sms'] }
+            }).then(otp => {
+                console.log('OTP received:', otp.code); // Debugging: Log the full SMS message
 
-            // Wait for the iframe to load before attempting to read the OTP
-            document.getElementById("otpIframe").onload = function() {
-                navigator.credentials.get({
-                    otp: { transport: ['sms'] }
-                }).then(otp => {
-                    console.log('OTP received:', otp.code); // Debugging: Log the full SMS message
-                    alert(otp.code)
-                    // Extract the OTP code from the SMS message
-                    const codeMatch = otp.code.match(/Your OTP for marking attendance is: (\d{6})/);
-                    if (codeMatch) {
-                        const otpValue = codeMatch[1]; // Extract the 6-digit OTP
-                        console.log('OTP extracted:', otpValue); // Debugging: Log the extracted OTP
+                // Extract the OTP code from the SMS message
+                const otpMatch = otp.code.match(/\b\d{6}\b/); // Match a 6-digit OTP
+                if (otpMatch) {
+                    const otpValue = otpMatch[0]; // Extract the 6-digit OTP
+                    console.log('OTP extracted:', otpValue); // Debugging: Log the extracted OTP
 
-                        // Alert the OTP
-                        alert('OTP detected: ' + otpValue);
-                    } else {
-                        console.error('OTP not found in the SMS message.');
-                    }
-                }).catch(err => {
-                    console.error('Error retrieving OTP:', err);
-                });
-            };
-        } else {
-            console.warn('OTPCredential API not supported in this browser.');
-        }
-    </script>
+                    // Alert the OTP
+                    alert('OTP detected: ' + otpValue);
+                } else {
+                    console.error('OTP not found in the SMS message.');
+                }
+            }).catch(err => {
+                console.error('Error retrieving OTP:', err);
+            });
+        };
+    } else {
+        console.warn('OTPCredential API not supported in this browser.');
+    }
+</script>
 {% endblock body %}
