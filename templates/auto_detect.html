@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block title %}Auto Read OTP{% endblock title %}
+
+{% block body %}
+    <h2 class="text-2xl font-semibold mt-4 text-center">Auto Read OTP</h2>
+    <div class="container my-3 text-center">
+        <p class="alert alert-info">Waiting for OTP...</p>
+        <div class="w-full max-w-md mx-auto">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Enter the OTP</h2>
+            <form id="otpForm" class="space-y-4">
+                <div>
+                    <label for="otp" class="block text-gray-600 font-medium">OTP:</label>
+                    <div id="otpContainer" class="flex justify-center space-x-2">
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                    </div>
+                </div>
+            </form>
+            <div id="otpMessages" class="mt-4 text-center"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            async function startSMSMonitoring() {
+                if (!("OTPCredential" in window)) {
+                    console.log("WebOTP API not supported");
+                    return;
+                }
+
+                try {
+                    const abortController = new AbortController();
+                    setTimeout(() => abortController.abort(), 120000); // Stop after 2 minutes
+                    
+                    const otpCredential = await navigator.credentials.get({
+                        otp: { transport: ["sms"] },
+                        signal: abortController.signal
+                    });
+
+                    if (otpCredential && otpCredential.code) {
+                        console.log("OTP received:", otpCredential.code);
+                        fillOTP(otpCredential.code);
+                    }
+                } catch (error) {
+                    console.log("OTP Retrieval Failed:", error);
+                }
+            }
+
+            function fillOTP(otp) {
+                const otpInputs = document.querySelectorAll(".otp-box");
+                otp.split('').forEach((char, index) => {
+                    if (otpInputs[index]) {
+                        otpInputs[index].value = char;
+                    }
+                });
+            }
+
+            startSMSMonitoring();
+        });
+    </script>
+{% endblock body %}

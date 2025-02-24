@@ -28,7 +28,7 @@ auth_token = keys.auth_token
 client = Client(account_sid, auth_token)
 
 
-AISSMS_COORDINATES = (18.505423 , 73.952885)
+AISSMS_COORDINATES = (18.451306 , 73.820188)
 
 @app.after_request
 def add_header(response):
@@ -495,35 +495,33 @@ def submitAttendance():
     return jsonify({'status': 'success', 'message': 'Attendance marked successfully'})
 
 # Route for the OTP verification page
-@app.route('/verify_otp', methods=['GET', 'POST'])
+@app.route('/verify_otp', methods=['POST'])
 def verify_otp():
-    if request.method == 'POST':
-        entered_otp = request.form['otp']
-        subject = request.form.get('subject')
-        roll_no = current_user.username  # Get the current user's roll number
-        subject_parts = subject.split(' - ')
-        subject_name = subject_parts[0]
-        print(subject_name)
-            # Retrieve the OTP record from the database
-        otp_record = OTPRecord.query.filter_by(roll_no=roll_no,subject = subject_name).first()
-        print(f"roll_no: {roll_no}")
-        print(f"otp_record: {otp_record}")
-        if otp_record and otp_record.otp == entered_otp:
-            
-            return redirect(url_for('attendance_success'))
-        else:
-            flash('Invalid OTP. Please try again.', 'danger')
-       
-    return render_template('verify_otp.html')
+    data = request.get_json()
+    entered_otp = data.get('otp')
+    subject = data.get('subject')
+    roll_no = current_user.username  # Get the current user's roll number
+    subject_parts = subject.split(' - ')
+    subject_name = subject_parts[0]
+    print(subject_name)
+        # Retrieve the OTP record from the database
+    otp_record = OTPRecord.query.filter_by(roll_no=roll_no,subject = subject_name).first()
+    print(f"roll_no: {roll_no}")
+    print(f"otp_record: {otp_record}")
+    if otp_record and otp_record.otp == entered_otp:
+        session['otp_verified'] = True
+        return jsonify({'status': 'success', 'message': 'OTP verified successfully'})
+    else:
+        return jsonify({'status': 'invalid_otp', 'message': 'Invalid OTP entered'})
 
 
 
 
-# Dummy route to indicate successful attendance marking
-@app.route('/attendance_success')
-def attendance_success():
-    session['otp_verified'] = True
-    return render_template('success.html')
+# # Dummy route to indicate successful attendance marking
+# @app.route('/attendance_success')
+# def attendance_success():
+#     session['otp_verified'] = True
+#     return render_template('success.html')
 
 @app.route('/initVerifyLocation')
 def initVerifyLocation():
@@ -547,7 +545,7 @@ def verify_location():
         distance = geodesic(AISSMS_COORDINATES, user_coordinates).meters
 
         # Check if within 50 meters
-        if distance <= 50:
+        if distance <= 200:
             session['location_flag'] = True
             return jsonify({"status": "success", "message": "Within range, redirect to OTP page."})
         else:
@@ -689,7 +687,9 @@ def post_attendance():
                 mail.send(msg)
                 message = client.messages.create(
                     from_= keys.twilio_number,
-                    body = f'Your OTP for marking attendance is: {otp}. This OTP is valid for 10 minutes.\n@humble-space-goggles-gwqp6q65wpr2wxgj-5000.app.github.dev #{otp}',
+                    body = f"""Your OTP for marking attendance is: {otp}
+
+@studious-umbrella-jw5g95949r7hpjrx-5000.app.github.dev #{otp}""",
                     to=phone_no
                 )
                 print('OTP sent successfully',message.sid)
@@ -808,5 +808,22 @@ def submit_user_attendance():
 
     return jsonify({'status': 'failed', 'message': 'Unknown error occurred.'})
 
+
+@app.route('/get_otp', methods=['POST'])
+def get_otp():
+    data = request.get_json()
+    subject = data.get("subject")
+    subject_parts = subject.split(' - ')
+    subject_name = subject_parts[0]
+    otp_record = OTPRecord.query.filter_by(roll_no=current_user.username,subject = subject_name).first()
+    if subject in otp_storage:
+        return jsonify({"status": "success", "otp": otp_record.otp})
+    else:
+        return jsonify({"status": "failed", "message": "No OTP found for this subject."})
+
+
+@app.route('/auto_detect', methods = ['GET'])
+def auto_detect():
+    return render_template('auto_detect.html')
 if __name__ == "__main__":
     app.run(debug=True)

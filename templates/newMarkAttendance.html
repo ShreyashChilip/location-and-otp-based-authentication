@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Attendance Verification{% endblock title %}
 {% block body %}
+    <!-- Previous HTML remains the same until the OTP form -->
     <h2 class="text-2xl font-semibold mt-4 text-center">Mark Attendance for:</h2>
     <div class="container my-3">
         <div class="alert alert-info">
@@ -18,11 +19,29 @@
                     </div>
                 </div>
             </div>
+
+            <!-- OTP Verification Card -->
             <div class="col mb-4">
                 <div class="card">
                     <div class="card-body text-center">
                         <h4 class="card-title">Verify OTP</h4>
-                        <iframe id="otpIframe" src="/verify_otp" title="Verify OTP" class="w-100" style="height: 400px; border: 1px solid #ccc;"></iframe>
+                        <div class="w-full max-w-md mx-auto">
+                            <h2 class="text-xl font-semibold text-gray-700 mb-4">Enter the OTP sent to your email</h2>
+                            <form id="otpForm" class="space-y-4">
+                                <div>
+                                    <label for="otp" class="block text-gray-600 font-medium">OTP:</label>
+                                    <div id="otpContainer" class="flex justify-center space-x-2">
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                        <input type="text" maxlength="1" class="otp-box form-control text-center" required>
+                                    </div>
+                                </div>
+                            </form>
+                            <div id="otpMessages" class="mt-4 text-center"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -34,7 +53,75 @@
     </div>
 
     <script>
-        // Submit attendance
+        
+        document.addEventListener("DOMContentLoaded", function() {
+
+            if ("OTPCredential" in window) {
+                window.addEventListener("DOMContentLoaded", () => {
+                    navigator.credentials.get({ otp: { transport: ["sms"] } }).then(otp => {
+                        const otpCode = otp.code.match(/(#\d{6})/)[0];
+                        alert("Auto-fetched OTP: " + otpCode);
+                    }).catch(err => console.error("Error fetching OTP", err));
+                });
+            }
+
+            const otpInputs = document.querySelectorAll(".otp-box");
+            otpInputs[0].focus();
+
+            otpInputs.forEach((input, index) => {
+                input.addEventListener("input", function() {
+                    if (this.value.length === 1 && index < otpInputs.length - 1) {
+                        otpInputs[index + 1].focus();
+                    }
+                    checkOtpCompletion();
+                });
+                
+                input.addEventListener("keydown", function(e) {
+                    if (e.key === "Backspace" && !this.value && index > 0) {
+                        otpInputs[index - 1].focus();
+                    }
+                });
+            });
+
+            function checkOtpCompletion() {
+                const otp = Array.from(otpInputs).map(input => input.value).join("");
+                if (otp.length === otpInputs.length) {
+                    verifyOtp(otp);
+                }
+            }
+
+            function verifyOtp(otp) {
+                const messagesDiv = document.getElementById("otpMessages");
+                fetch("/verify_otp", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ otp: otp, subject: "{{ subject }}" })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const messageElement = document.createElement("p");
+                    messageElement.textContent = data.message;
+                    
+                    if (data.status === "success") {
+                        messageElement.classList.add("text-success");
+                        otpInputs.forEach(input => input.disabled = true);
+                    } else {
+                        messageElement.classList.add("text-danger");
+                    }
+                    
+                    messagesDiv.innerHTML = "";
+                    messagesDiv.appendChild(messageElement);
+                })
+                .catch(error => {
+                    const messageElement = document.createElement("p");
+                    messageElement.textContent = "Error verifying OTP. Please try again.";
+                    messageElement.classList.add("text-danger");
+                    messagesDiv.innerHTML = "";
+                    messagesDiv.appendChild(messageElement);
+                });
+            }
+        });
+
         document.getElementById("submitAttendance").addEventListener("click", function() {
             fetch("/submit_user_attendance", {
                 method: "POST",
@@ -47,43 +134,14 @@
             })
             .then(response => response.json())
             .then(data => {
-                if(data.status  === 'failed'){
+                if (data.status === 'failed') {
                     alert(data.message);
                 }
                 if (data.status === 'success') {
-                    window.location.replace("/home");  // Redirect to homepage without history
+                    window.location.replace("/home");
                 }
             })
             .catch(error => alert("An error occurred: " + error));
         });
-    // Automatically read OTP from SMS
-    if ('OTPCredential' in window) {
-        console.log('OTPCredential API is supported.');
-
-        // Wait for the iframe to load before attempting to read the OTP
-        document.getElementById("otpIframe").onload = function() {
-            navigator.credentials.get({
-                otp: { transport: ['sms'] }
-            }).then(otp => {
-                console.log('OTP received:', otp.code); // Debugging: Log the full SMS message
-
-                // Extract the OTP code from the SMS message
-                const otpMatch = otp.code.match(/\b\d{6}\b/); // Match a 6-digit OTP
-                if (otpMatch) {
-                    const otpValue = otpMatch[0]; // Extract the 6-digit OTP
-                    console.log('OTP extracted:', otpValue); // Debugging: Log the extracted OTP
-
-                    // Alert the OTP
-                    alert('OTP detected: ' + otpValue);
-                } else {
-                    console.error('OTP not found in the SMS message.');
-                }
-            }).catch(err => {
-                console.error('Error retrieving OTP:', err);
-            });
-        };
-    } else {
-        console.warn('OTPCredential API not supported in this browser.');
-    }
-</script>
+    </script>
 {% endblock body %}
