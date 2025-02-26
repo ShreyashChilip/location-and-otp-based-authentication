@@ -1,141 +1,300 @@
 {% extends 'base.html' %}
 {% block title %}
-  Home
+  Attendance Management System
 {% endblock title %}
 {% block home %}
   active
 {% endblock home %}
 {% block body %}
+<!-- Bootstrap JS (for navbar toggle functionality) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-      function logout() {
-          // Redirect to the 'logout' route
-          window.location.href = "{{ url_for('logout') }}";
-      }
-  </script>
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}
+<script>
+  function logout() {
+    window.location.href = "{{ url_for('logout') }}";
+  }
+</script>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="flash-container">
       {% for msg in messages %}
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <div class="alert alert-success alert-dismissible fade show animated fadeIn" role="alert">
         {{msg}}
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
       {% endfor %}
-    {% endif %}
-  {% endwith %}
-    
+    </div>
+  {% endif %}
+{% endwith %}
 
-      <form method="POST">
-        <div class="container my-3">
-          <div class="row row-cols-1 row-cols-md-2">
-            <div class="col mb-4">
-              <!-- Card -->
-              <div class="card">
-          
-                <!--Card image-->
-                <div class="view overlay">
-                  <img class="card-img-top" src="https://i.ibb.co/7tSCGyB/admin-control-panel-vector.jpg" alt="Card image cap">
-                  <a href="#!">
-                    <div class="mask rgba-white-slight"></div>
-                  </a>
-                </div>
-          
-                <!--Card content-->
-                <div class="card-body">
-          
-                  <!--Title-->
-                  <h4 class="card-title">Admin Dashboard</h4>
-                  <!--Text-->
-                  <p class="card-text">Manage and monitor student attendance, view reports, and oversee system settings from a centralized interface.</p>
-                  <!-- Provides extra visual weight and identifies the primary action in a set of buttons -->
-                  <button type="button" class="btn btn-light-blue btn-md" onclick="call('showAdmin')">View</button>
-                </div>
-          
-              </div>
-              <!-- Card -->
-            </div>
-            <div class="col mb-4">
-              <!-- Card -->
-              <div class="card">
-          
-                <!--Card image-->
-                <div class="view overlay">
-                  <img class="card-img-top" src="https://i.ibb.co/cvph8kz/student-login-icon-flat-design-229309143.webp" alt="Card image cap">
-                  <a href="#!">
-                    <div class="mask rgba-white-slight"></div>
-                  </a>
-                </div>
-          
-                <!--Card content-->
-                <div class="card-body">
-          
-                  <!--Title-->
-                  <h4 class="card-title">View Listed Attendance</h4>
-                  <!--Text-->
-                  <p class="card-text">Access personal attendance records, check upcoming classes, and view attendance history in a user-friendly interface.</p>
-                  <!-- Provides extra visual weight and identifies the primary action in a set of buttons -->
-                  <button type="button" class="btn btn-light-blue btn-md" onclick="call('view_attendance')">View</button>
-          
-                </div>
-          
-              </div>
-              <!-- Card -->
-            </div>
-            <div class="col mb-4">
-              <!-- Card -->
-              <div class="card">
-          
-                <!--Card image-->
-                <div class="view overlay"><img class="card-img-top" src="https://i.ibb.co/CmfTmSL/istockphoto-1167651240-612x612.jpg" alt="Card image cap">
-                  <a href="#!">
-                    <div class="mask rgba-white-slight"></div>
-                  </a>
-                </div>
-          
-                <!--Card content-->
-                <div class="card-body">
-          
-                  <!--Title-->
-                  <h4 class="card-title">Mark Attendance</h4>
-                  <!--Text-->
-                  <p class="card-text">Mark attendance for sessions, using securely generate one-time passwords (OTP) for students to verify their attendance during class, as well as location based verification, allowing two layered verification before marking the attendance.</p>
-                  <!-- Provides extra visual weight and identifies the primary action in a set of buttons -->
-                  <button type="button" class="btn btn-light-blue btn-md" onclick="call('markattendance')">View</button>
-          
-                </div>
-          
-              </div>
-              <!-- Card -->
-            </div>
-           
+<!-- Three.js canvas -->
+<div id="three-container"></div>
+
+
+<!-- Features Section -->
+<div class="features-section py-20 bg-gray-900 relative z-10">
+  <div class="container mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-bold text-center text-white mb-12">What would you like to do?</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Admin Dashboard Card -->
+      <div class="feature-card p-8 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div class="text-center">
+          <div class="icon bg-green-500 p-4 rounded-full inline-block">
+            <i class="fas fa-user-shield text-white text-3xl"></i>
           </div>
-      </form>
-    
-  
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-   
+          <h3 class="text-2xl font-bold text-white mt-6">Admin Dashboard</h3>
+          <p class="text-gray-400 mt-4">Manage and monitor student attendance, view reports, and oversee system settings.</p>
+          <button onclick="call('showAdmin')" class="btn-custom mt-6 py-2 px-6">Access Dashboard</button>
+        </div>
+      </div>
+      
+      <!-- View Attendance Card -->
+      <div class="feature-card p-8 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div class="text-center">
+          <div class="icon bg-blue-500 p-4 rounded-full inline-block">
+            <i class="fas fa-clipboard-list text-white text-3xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-white mt-6">View Attendance</h3>
+          <p class="text-gray-400 mt-4">Access personal attendance records, check upcoming classes, and view attendance history.</p>
+          <button onclick="call('view_attendance')" class="btn-custom mt-6 py-2 px-6">View Records</button>
+        </div>
+      </div>
+      
+      <!-- Mark Attendance Card -->
+      <div class="feature-card p-8 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <div class="text-center">
+          <div class="icon bg-purple-500 p-4 rounded-full inline-block">
+            <i class="fas fa-check-double text-white text-3xl"></i>
+          </div>
+          <h3 class="text-2xl font-bold text-white mt-6">Mark Attendance</h3>
+          <p class="text-gray-400 mt-4">Use secure OTP and location-based verification to mark attendance during class sessions.</p>
+          <button onclick="call('markattendance')" class="btn-custom mt-6 py-2 px-6">Mark Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- Information Section -->
+<div class="info-section py-20 bg-gray-800 relative z-10">
+  <div class="container mx-auto px-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      <div class="text-center md:text-left">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Advanced Attendance Verification</h2>
+        <p class="text-gray-400 mb-8">Our system uses a two-layered verification process:</p>
+        <ul class="space-y-4">
+          <li class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 text-2xl mr-4"></i>
+            <span class="text-gray-400">Secure one-time passwords for student authentication</span>
+          </li>
+          <li class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 text-2xl mr-4"></i>
+            <span class="text-gray-400">Geolocation verification ensures physical presence</span>
+          </li>
+          <li class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 text-2xl mr-4"></i>
+            <span class="text-gray-400">Instant attendance marking and notifications</span>
+          </li>
+          <li class="flex items-center">
+            <i class="fas fa-check-circle text-green-500 text-2xl mr-4"></i>
+            <span class="text-gray-400">Detailed analytics on attendance patterns</span>
+          </li>
+        </ul>
+      </div>
+      <div class="rounded-lg overflow-hidden shadow-lg">
+        <img src="https://i.ibb.co/nLDYRys/yuki-logo.png" alt="Verification Process" class="w-full h-auto">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer CTA -->
+<div class="cta-section py-20 bg-gray-900 relative z-10">
+  <div class="container mx-auto px-4 text-center">
+    <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Ready to get started?</h2>
+    <p class="text-lg text-gray-400 mb-8">Choose one of our main features above or contact support for assistance.</p>
+    <button class="btn-custom py-3 px-8 text-lg">Contact Support</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-function call(page) {
-    fetch(`/${page}`, { method: 'GET' })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        // Redirect to the response URL
-        window.location.href = response.url;
-    })
-    .catch(error => {
-        // Handle errors
-        console.error('There was a problem with the fetch operation:', error);
+  // THREE.JS ANIMATED BACKGROUND
+  let scene, camera, renderer, torusKnot, particles = [];
+
+  function initThree() {
+    // Create scene
+    scene = new THREE.Scene();
+    
+    // Create camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 50;
+    
+    // Create renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0f172a, 1);
+    document.getElementById('three-container').appendChild(renderer.domElement);
+    
+    // Add 3D torus knot
+    addTorusKnot();
+    
+    // Add particles
+    addParticles();
+    
+    // Add event listener for resize
+    window.addEventListener('resize', onWindowResize, false);
+    
+    // Start animation loop
+    animate();
+  }
+
+  function addTorusKnot() {
+    const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+    const material = new THREE.MeshPhongMaterial({
+      color: 0xbaf846,
+      shininess: 100,
+      specular: 0x86efac,
+      transparent: true,
+      opacity: 0.9
     });
-}
+    torusKnot = new THREE.Mesh(geometry, material);
+    scene.add(torusKnot);
+
+    // Add lights
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+  }
+
+  function addParticles() {
+    const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+    const material = new THREE.MeshBasicMaterial({ 
+      color: 0xbaf846,
+      transparent: true,
+      opacity: 0.7
+    });
+    
+    for (let i = 0; i < 100; i++) {
+      const particle = new THREE.Mesh(geometry, material);
+      
+      // Random position
+      particle.position.x = Math.random() * 100 - 50;
+      particle.position.y = Math.random() * 100 - 50;
+      particle.position.z = Math.random() * 100 - 50;
+      
+      // Reduced velocity by half
+      particle.velocity = new THREE.Vector3(
+        (Math.random() * 0.02 - 0.01),
+        (Math.random() * 0.02 - 0.01),
+        (Math.random() * 0.02 - 0.01)
+      );
+      
+      // Add to scene and particles array
+      scene.add(particle);
+      particles.push(particle);
+    }
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    
+    // Rotate torus knot
+    if (torusKnot) {
+      torusKnot.rotation.x += 0.01;
+      torusKnot.rotation.y += 0.02;
+    }
+    
+    // Update particles
+    particles.forEach(particle => {
+      particle.position.add(particle.velocity);
+      
+      // Boundary check
+      if (Math.abs(particle.position.x) > 50) {
+        particle.velocity.x = -particle.velocity.x;
+      }
+      if (Math.abs(particle.position.y) > 50) {
+        particle.velocity.y = -particle.velocity.y;
+      }
+      if (Math.abs(particle.position.z) > 50) {
+        particle.velocity.z = -particle.velocity.z;
+      }
+    });
+    
+    renderer.render(scene, camera);
+  }
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  // Initialize Three.js
+  initThree();
 </script>
 
-    {% endblock body %}
+<style>
+  /* Custom CSS Styles */
+  .hero-section {
+    background: transparent;
+  }
+
+  .btn-custom {
+    background: linear-gradient(to right, #baf846, #86efac);
+    color: #0f172a;
+    font-weight: bold;
+    transition: all 0.3s ease;
+  }
+
+  .btn-custom:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(186, 248, 70, 0.4);
+  }
+
+  .feature-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: -40px auto 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  }
+
+  .info-section {
+    background: linear-gradient(135deg, #1e293b, #0f172a);
+  }
+
+  .cta-section {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+  }
+
+  .flash-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    max-width: 350px;
+  }
+</style>
+{% endblock body %}

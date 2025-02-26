@@ -1,89 +1,173 @@
 {% extends 'base.html' %}
 {% block title %}Attendance Verification{% endblock title %}
+
 {% block body %}
-    <h2 class="text-2xl font-semibold mt-4 text-center">Mark Attendance for:</h2>
-    <div class="container my-3">
-        <div class="alert alert-info">
-            <p><strong>Date:</strong> {{ formatted_date }}</p>
-            <p><strong>Time:</strong> {{ formatted_time }}</p>
-            <p><strong>Subject:</strong> {{ subject }}</p>
-        </div>
+<style>
+  body {
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #f8fafc;
+    font-family: 'Geist Mono', monospace;
+  }
+
+  .modalcs {
+    width: 90%;
+    max-width: 650px;
+    background: rgba(30, 41, 59, 0.9);
+    border: 1px solid rgba(186, 248, 70, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(186, 248, 70, 0.3);
+    padding: 20px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -45%);
+    z-index: 10;
+  }
+
+  .formcs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(to right, #baf846, #86efac);
+    color: #0f172a;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(186, 248, 70, 0.4);
+  }
+</style>
+
+<!-- Modal Card -->
+<div class="modalcs">
+  <h4 class="text-xl font-bold text-center text-green-400 mb-4">Verify Attendance</h4>
+  
+  <div class="p-4 bg-gray-800 rounded-lg text-center shadow-md">
+    <p><strong>Date:</strong> {{ formatted_date }}</p>
+    <p><strong>Time:</strong> {{ formatted_time }}</p>
+    <p><strong>Subject:</strong> {{ subject }}</p>
+  </div>
+
+  <div class="formcs">
+    <!-- Location Verification -->
+    <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+      <h4 class="text-lg font-semibold text-green-400 text-center mb-3">Verify Location</h4>
+      <iframe id="locationIframe" 
+      src="/initVerifyLocation" 
+      title="Verify Location" 
+      class="w-full rounded-md shadow-md" 
+      style="height: 250px; border: none;">
+  </iframe>
+  
+    </div>
     
-        <div class="row row-cols-1 row-cols-md-2">
-            <div class="col mb-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Verify Location</h4>
-                        <iframe id="locationIframe" src="/initVerifyLocation" title="Verify Location" class="w-100" style="height: 400px; border: 1px solid #ccc;"></iframe>
-                    </div>
-                </div>
-            </div>
-            <div class="col mb-4">
-                <div class="card">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Verify OTP</h4>
-                        <iframe id="otpIframe" src="/verify_otp" title="Verify OTP" class="w-100" style="height: 400px; border: 1px solid #ccc;"></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
-    
-        <div class="text-center">
-            <button id="submitAttendance" class="btn btn-primary">Submit Attendance</button>
-        </div>
+    <!-- OTP Verification -->
+    <div class="bg-gray-900 p-4 rounded-lg shadow-md">
+      <h4 class="text-lg font-semibold text-green-400 text-center mb-3">Verify OTP</h4>
+      <p class="text-gray-300 text-center mb-2">Enter the OTP sent to your email</p>
+      
+      <form id="otpForm" class="flex justify-center space-x-2">
+        {% for _ in range(6) %}
+          <input type="text" maxlength="1" class="otp-box w-10 h-12 text-xl font-bold text-center bg-gray-700 text-white border border-green-400 rounded-md focus:ring-2 focus:ring-green-300" required>
+        {% endfor %}
+      </form>
+      <div id="otpMessages" class="text-center mt-4 text-sm"></div>
     </div>
 
-    <script>
-        // Submit attendance
-        document.getElementById("submitAttendance").addEventListener("click", function() {
+    <button id="submitAttendance" class="btn-primary">Submit Attendance</button>
+  </div>
+</div>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const otpInputs = document.querySelectorAll(".otp-box");
+        const submitButton = document.getElementById("submitAttendance");
+        const otpMessages = document.getElementById("otpMessages");
+        const errorMessageBox = document.createElement("div"); // Create an error message box
+    
+        errorMessageBox.classList.add("text-center", "text-red-400", "mt-4", "text-sm");
+        submitButton.parentNode.insertBefore(errorMessageBox, submitButton.nextSibling); // Add it below the button
+    
+        otpInputs[0].focus();
+    
+        otpInputs.forEach((input, index) => {
+            input.addEventListener("input", function() {
+                if (this.value.length === 1 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+                checkOtpCompletion();
+            });
+    
+            input.addEventListener("keydown", function(event) {
+                if (event.key === "Backspace" && this.value === "" && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+        });
+    
+        function checkOtpCompletion() {
+            const otp = Array.from(otpInputs).map(input => input.value).join("");
+            if (otp.length === otpInputs.length) {
+                verifyOtp(otp);
+            }
+        }
+    
+        function verifyOtp(otp) {
+            fetch("/verify_otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ otp: otp, subject: "{{ subject }}" })
+            })
+            .then(response => response.json())
+            .then(data => {
+                otpMessages.textContent = data.message;
+                otpMessages.classList.remove("text-red-400", "text-green-400");
+                otpMessages.classList.add(data.status === "success" ? "text-green-400" : "text-red-400");
+    
+                if (data.status === "success") {
+                    otpInputs.forEach(input => input.disabled = true);
+                }
+            });
+        }
+    
+        // Function to submit attendance
+        submitButton.addEventListener("click", function() {
+            const formattedDate = "{{ formatted_date }}";
+            const formattedTime = "{{ formatted_time }}";
+            const subject = "{{ subject }}";
+    
             fetch("/submit_user_attendance", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    formatted_date: "{{ formatted_date }}",
-                    formatted_time: "{{ formatted_time }}",
-                    subject: "{{ subject }}"
+                    formatted_date: formattedDate,
+                    formatted_time: formattedTime,
+                    subject: subject
                 })
             })
             .then(response => response.json())
             .then(data => {
-                if(data.status  === 'failed'){
-                    alert(data.message);
-                }
-                if (data.status === 'success') {
-                    window.location.replace("/home");  // Redirect to homepage without history
+                if (data.status === "success") {
+                    window.location.href = "/home"; // Redirect to home page on success
+                } else {
+                    errorMessageBox.textContent = data.message; // Show error message below button
                 }
             })
-            .catch(error => alert("An error occurred: " + error));
-        });
-    // Automatically read OTP from SMS
-    if ('OTPCredential' in window) {
-        console.log('OTPCredential API is supported.');
-
-        // Wait for the iframe to load before attempting to read the OTP
-        document.getElementById("otpIframe").onload = function() {
-            navigator.credentials.get({
-                otp: { transport: ['sms'] }
-            }).then(otp => {
-                console.log('OTP received:', otp.code); // Debugging: Log the full SMS message
-
-                // Extract the OTP code from the SMS message
-                const otpMatch = otp.code.match(/\b\d{6}\b/); // Match a 6-digit OTP
-                if (otpMatch) {
-                    const otpValue = otpMatch[0]; // Extract the 6-digit OTP
-                    console.log('OTP extracted:', otpValue); // Debugging: Log the extracted OTP
-
-                    // Alert the OTP
-                    alert('OTP detected: ' + otpValue);
-                } else {
-                    console.error('OTP not found in the SMS message.');
-                }
-            }).catch(err => {
-                console.error('Error retrieving OTP:', err);
+            .catch(error => {
+                errorMessageBox.textContent = "An error occurred. Please try again.";
             });
-        };
-    } else {
-        console.warn('OTPCredential API not supported in this browser.');
-    }
-</script>
+        });
+    });
+    </script>
+    
+    
+    
 {% endblock body %}

@@ -11,7 +11,6 @@ with app.app_context():
         # Use session.no_autoflush context manager to disable autoflush temporarily
         with db.session.no_autoflush:
             
-            df = pd.read_excel('student_data.xlsx')
             # Insert user data
             df = pd.read_excel('student_data.xlsx')
             for index, row in df.iterrows():

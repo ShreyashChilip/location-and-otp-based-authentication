@@ -1,96 +1,564 @@
 <!doctype html>
 <html lang="en" style="height: 100%;">
-  <head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <title>Login - Attendance System</title>
-  </head>
-  <body style="background-image: linear-gradient(135deg, #11125c, #06021c); height: 100%; margin: 0; background-repeat: no-repeat; background-attachment: fixed;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Login - Attendance System</title>
+  <!-- Modern CSS Framework -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <!-- Animation Libraries -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"/>
+  <style>
+    .preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0f172a;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid #baf846;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 1s linear infinite;
+    }
+    
+    @keyframes rotation {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    
+    .gradient-custom {
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+    }
+    
+    .card-glow {
+      box-shadow: 0 0 20px rgba(186, 248, 70, 0.6);
+      transition: all 0.3s ease;
+    }
+    
+    .card-glow:hover {
+      box-shadow: 0 0 30px rgba(186, 248, 70, 0.8);
+      transform: translateY(-5px);
+    }
+    
+    .btn-custom {
+      background: linear-gradient(to right, #baf846, #86efac);
+      color: #0f172a;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(186, 248, 70, 0.4);
+    }
+    
+    .form-input {
+      border: none;
+      border-bottom: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+    
+    .form-input:focus {
+      border-bottom: 2px solid #baf846;
+      box-shadow: none;
+      outline: none;
+    }
+    
+    /* Desktop clip path */
+    @media (min-width: 768px) {
+      .right-panel {
+        background: linear-gradient(135deg, #baf846 0%, #f0fdf4 100%);
+        clip-path: polygon(10% 0, 100% 0, 100% 100%, 0% 100%);
+      }
+    }
+    
+    /* Mobile clip path - adjusted for top-down stacking */
+    @media (max-width: 767px) {
+      .right-panel {
+        background: linear-gradient(135deg, #baf846 0%, #f0fdf4 100%);
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 85%);
+      }
+    }
+    
+    .icon-shake {
+      animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      perspective: 1000px;
+    }
+    
+    @keyframes shake {
+      10%, 90% {
+        transform: translate3d(-1px, 0, 0);
+      }
+      20%, 80% {
+        transform: translate3d(2px, 0, 0);
+      }
+      30%, 50%, 70% {
+        transform: translate3d(-4px, 0, 0);
+      }
+      40%, 60% {
+        transform: translate3d(4px, 0, 0);
+      }
+    }
+    
+    .floating {
+      animation: floating 3s ease-in-out infinite;
+    }
+    
+    @keyframes floating {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
+    }
+    
+    /* Three.js canvas styling */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+    
+    /* Adjusted container for better visibility with 3D background */
+    .container.with-bg {
+      backdrop-filter: blur(5px);
+    }
+    
+    /* Improved card styling for better contrast with dynamic background */
+    .improved-card {
+      backdrop-filter: blur(16px);
+      background-color: rgba(255, 255, 255, 0.85);
+    }
+    
+    /* Particle effect for mouse interaction */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(186, 248, 70, 0.8) 0%, rgba(134, 239, 172, 0) 70%);
+      transform: translate(-50%, -50%);
+      z-index: 2;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <!-- Three.js canvas -->
+  <div id="three-container"></div>
+  
+  <!-- Preloader -->
+  <div class="preloader">
+    <span class="loader"></span>
+  </div>
+  
+  <!-- Flash Messages -->
+  <div id="flash-messages" class="fixed top-4 right-4 z-50 w-80">
     {% with messages = get_flashed_messages() %}
       {% if messages %}
-      {% for msg in messages %}
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{msg}}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      {% endfor %}
+        {% for msg in messages %}
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded shadow-md animate__animated animate__fadeInRight">
+          <div class="flex">
+            <div class="py-1">
+              <i class="fas fa-exclamation-circle mr-2"></i>
+            </div>
+            <div>
+              <p>{{msg}}</p>
+            </div>
+            <div class="ml-auto">
+              <button type="button" class="close-alert text-red-700 hover:text-red-900">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
       {% endif %}
     {% endwith %}
+  </div>
 
-    <section class="h-100 gradient-form">
-      <div class="container py-5 h-100">
-        <div class="row d-flex justify-content-center align-items-center h-100">
-          <div class="col-xl-10">
-            <div class="card rounded-3 text-black" style="box-shadow: 0 0 30px 10px rgb(194, 255, 124);">
-              <div class="row g-0">
-                <div class="col-lg-6">
-                  <div class="card-body p-md-5 mx-md-4">
-                    <div class="text-center">
-                      <img src="https://i.ibb.co/nLDYRys/yuki-logo.png"
-                        style="width: 185px;" alt="logo">
-                      <h4 class="mt-1 mb-5 pb-1 text-primary">Welcome to Attendance System</h4>
+  <div class="container mx-auto px-4 py-10 min-h-screen flex items-center justify-center with-bg">
+    <div class="w-full max-w-5xl animate__animated animate__fadeIn animate__delay-1s">
+      <div class="rounded-xl overflow-hidden shadow-2xl card-glow improved-card">
+        <div class="flex flex-col-reverse md:flex-row">
+          <!-- Left Panel - Login Form -->
+          <div class="w-full md:w-1/2 p-8 md:p-12">
+            <div class="text-center mb-8">
+              <img src="https://i.ibb.co/nLDYRys/yuki-logo.png" class="h-16 mx-auto floating" alt="logo">
+              <h2 class="mt-6 text-2xl font-bold text-slate-800">Welcome Back</h2>
+              <p class="mt-2 text-sm text-slate-600">Access your OTP and Location-based Attendance System</p>
+            </div>
+            
+            <form method="POST" class="space-y-6">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                  <i class="fas fa-user"></i>
+                </div>
+                <input type="text" name="uname" id="form2Example11" class="form-input w-full py-3 pl-10 pr-4 text-slate-700 bg-slate-50 rounded-lg focus:bg-white" placeholder="Username" required>
+              </div>
+              
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                  <i class="fas fa-lock"></i>
+                </div>
+                <input type="password" name="pwd" id="form2Example22" class="form-input w-full py-3 pl-10 pr-4 text-slate-700 bg-slate-50 rounded-lg focus:bg-white" placeholder="Password" required>
+                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                  <i class="fas fa-eye text-slate-400 hover:text-slate-700 cursor-pointer" id="togglePassword"></i>
+                </div>
+              </div>
+              
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-green-500 focus:ring-green-400 border-gray-300 rounded">
+                  <label for="remember-me" class="ml-2 block text-sm text-slate-600">Remember me</label>
+                </div>
+                <a href="#" class="text-sm font-medium text-green-600 hover:text-green-500">Forgot password?</a>
+              </div>
+              
+              <div>
+                <button type="submit" class="btn-custom w-full flex justify-center py-3 px-4 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                  <span id="login-text">Sign In</span>
+                  <span id="login-loader" class="hidden">
+                    <svg class="animate-spin ml-2 h-5 w-5 text-slate-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </span>
+                </button>
+              </div>
+            </form>
+            
+            <div class="mt-6 text-center">
+              <p class="text-xs text-slate-500">Contact the Institute for Creating a New Account</p>
+            </div>
+          </div>
+          
+          <!-- Right Panel - Info -->
+          <div class="w-full md:w-1/2 right-panel">
+            <div class="p-8 md:p-12 h-full flex items-center">
+              <div class="animate__animated animate__fadeInRight">
+                <h3 class="text-2xl font-bold text-slate-800 mb-4">Smart Attendance Tracking</h3>
+                <div class="mb-8">
+                  <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                      <i class="fas fa-key text-green-600"></i>
                     </div>
-
-                    <form method="POST">
-                      <p class="text-muted">Please login to your account to access OTP and Location-based Attendance System</p>
-
-                      <div class="form-outline mb-4">
-                        <input type="text" name="uname" id="form2Example11" class="form-control"
-                          placeholder="Username" />
-                        <label class="form-label" for="form2Example11">Username</label>
-                      </div>
-
-                      <div class="form-outline mb-4">
-                        <input type="password" name="pwd" id="form2Example22" class="form-control" />
-                        <label class="form-label" for="form2Example22">Password</label>
-                      </div>
-
-                      <div class="text-center pt-1 mb-5 pb-1">
-                        <input type="submit" class="btn btn-warning btn-block fa-lg gradient-custom-2 mb-3" value="Log In">
-                        <a class="text-muted" href="#!">Forgot password?</a>
-                      </div>
-
-                      <div class="d-flex align-items-center justify-content-center pb-4">
-                        <p class="mb-0 me-2" style="font-size: 0.7em;color: gray">Contact the Institute for Creating a New Account</p>
-                      </div>
-                    </form>
+                    <div>
+                      <h4 class="font-semibold text-slate-700">OTP Verification</h4>
+                      <p class="text-sm text-slate-600">Secure authentication with one-time passwords</p>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center mb-4">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                      <i class="fas fa-map-marker-alt text-green-600"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-slate-700">Geolocation Tracking</h4>
+                      <p class="text-sm text-slate-600">Automatic location verification for accuracy</p>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center">
+                    <div class="bg-green-100 p-3 rounded-full mr-4">
+                      <i class="fas fa-chart-line text-green-600"></i>
+                    </div>
+                    <div>
+                      <h4 class="font-semibold text-slate-700">Real-time Analytics</h4>
+                      <p class="text-sm text-slate-600">Instant reporting and attendance insights</p>
+                    </div>
                   </div>
                 </div>
-
-                <div class="col-lg-6 mb-0">
-                  <div class="d-flex align-items-center h-100" style="background-image: linear-gradient(to left, #ffffff 0%, #baf846 100%);">
-                    <div class="text-white px-3 py-4 p-md-5 mx-md-4">
-                      <h4 class="mb-4" style="color: #0a0a0a;">Revolutionizing Attendance with OTP and Location-Based Tracking</h4>
-                      <p class="small mb-0" style="color: #333;">
-                        Welcome to a smarter way of managing attendance! Our system combines OTP (One-Time Password) authentication with geolocation tracking to ensure 100% accurate attendance. Gone are the days of manual errors—now, verify attendance through secure OTPs and automatic location detection. Say goodbye to delays and inaccuracies, and embrace a seamless, efficient solution!
-                      </p>
-                    </div>
-                  </div>
+                
+                <div class="bg-white/30 p-4 rounded-lg backdrop-blur-sm">
+                  <p class="text-sm text-slate-700">
+                    Welcome to a smarter way of managing attendance! Our system combines OTP authentication with geolocation tracking to ensure 100% accurate attendance.
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </div>
 
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script>
-      // Disable back and forward buttons
+  <!-- 3D Object Display Area -->
+  <div id="model-viewer" class="fixed bottom-4 right-4 h-32 w-32 z-10 hidden md:block"></div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // Disable back and forward buttons
+    history.pushState(null, null, document.URL);
+    window.addEventListener('popstate', function () {
       history.pushState(null, null, document.URL);
-      window.addEventListener('popstate', function () {
-          history.pushState(null, null, document.URL);
+    });
+    
+    // Preloader
+    $(window).on('load', function() {
+      setTimeout(function() {
+        $('.preloader').fadeOut(500);
+      }, 1000);
+    });
+    
+    // Close flash messages
+    $('.close-alert').on('click', function() {
+      $(this).closest('div.bg-red-100').addClass('animate__fadeOutRight');
+      setTimeout(() => {
+        $(this).closest('div.bg-red-100').remove();
+      }, 500);
+    });
+    
+    // Form submission loading state
+    $('form').on('submit', function() {
+      $('#login-text').text('Signing in...');
+      $('#login-loader').removeClass('hidden');
+      return true;
+    });
+    
+    // Input focus effects
+    $('.form-input').on('focus', function() {
+      $(this).prev('.absolute').find('i').addClass('text-green-500');
+    }).on('blur', function() {
+      $(this).prev('.absolute').find('i').removeClass('text-green-500');
+    });
+    
+    // Password toggle
+    document.getElementById('togglePassword').addEventListener('click', function() {
+      const passwordInput = document.getElementById('form2Example22');
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+      this.classList.toggle('fa-eye');
+      this.classList.toggle('fa-eye-slash');
+    });
+    
+    // THREE.JS ANIMATED BACKGROUND
+    let scene, camera, renderer, particles = [];
+    
+    function initThree() {
+      // Create scene
+      scene = new THREE.Scene();
+      
+      // Create camera
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.z = 50;
+      
+      // Create renderer
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0x0f172a, 1);
+      document.getElementById('three-container').appendChild(renderer.domElement);
+      
+      // Add particles
+      addParticles();
+      
+      // Add event listener for resize
+      window.addEventListener('resize', onWindowResize, false);
+      
+      // Start animation loop
+      animate();
+      
+      // Add mouse interaction
+      document.addEventListener('mousemove', onMouseMove, false);
+    }
+    
+    function addParticles() {
+      const geometry = new THREE.SphereGeometry(0.2, 16, 16);
+      const material = new THREE.MeshBasicMaterial({ 
+        color: 0xbaf846,
+        transparent: true,
+        opacity: 0.7
       });
-    </script>
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-  </body>
+      
+      // Reduced number of particles from 250 to 100
+      for (let i = 0; i < 100; i++) {
+        const particle = new THREE.Mesh(geometry, material);
+        
+        // Random position
+        particle.position.x = Math.random() * 100 - 50;
+        particle.position.y = Math.random() * 100 - 50;
+        particle.position.z = Math.random() * 100 - 50;
+        
+        // Reduced velocity by half
+        particle.velocity = new THREE.Vector3(
+          (Math.random() * 0.02 - 0.01),
+          (Math.random() * 0.02 - 0.01),
+          (Math.random() * 0.02 - 0.01)
+        );
+        
+        // Add to scene and particles array
+        scene.add(particle);
+        particles.push(particle);
+      }
+      
+      // Add ambient light for better visibility
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambientLight);
+      
+      // Add directional light
+      const directionalLight = new THREE.DirectionalLight(0xbaf846, 0.8);
+      directionalLight.position.set(1, 1, 1);
+      scene.add(directionalLight);
+    }
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Update particles
+      particles.forEach(particle => {
+        particle.position.add(particle.velocity);
+        
+        // Boundary check
+        if (Math.abs(particle.position.x) > 50) {
+          particle.velocity.x = -particle.velocity.x;
+        }
+        if (Math.abs(particle.position.y) > 50) {
+          particle.velocity.y = -particle.velocity.y;
+        }
+        if (Math.abs(particle.position.z) > 50) {
+          particle.velocity.z = -particle.velocity.z;
+        }
+      });
+      
+      // Reduced scene rotation speed by half
+      scene.rotation.y += 0.00025;
+      scene.rotation.x += 0.0001;
+      
+      renderer.render(scene, camera);
+    }
+    
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    
+    // Interactive mouse effect - simplified
+    function onMouseMove(event) {
+      // Create particle effect at mouse position - but less frequently
+      if (Math.random() > 0.7) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.left = event.clientX + 'px';
+        particle.style.top = event.clientY + 'px';
+        
+        // Smaller size for mouse particles
+        const size = Math.floor(Math.random() * 20) + 5;
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        
+        document.body.appendChild(particle);
+        
+        // Fade and remove after animation
+        setTimeout(() => {
+          particle.style.opacity = '0';
+          setTimeout(() => {
+            document.body.removeChild(particle);
+          }, 500);
+        }, 100);
+      }
+      
+      // Reduced 3D particle response to mouse movement
+      const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+      const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+      
+      // Affect fewer particles with smaller force
+      particles.forEach(particle => {
+        const distance = Math.sqrt(
+          Math.pow(particle.position.x / 50 - mouseX, 2) + 
+          Math.pow(particle.position.y / 50 - mouseY, 2)
+        );
+        
+        if (distance < 0.2) {
+          particle.velocity.x += (Math.random() - 0.5) * 0.05;
+          particle.velocity.y += (Math.random() - 0.5) * 0.05;
+          particle.velocity.z += (Math.random() - 0.5) * 0.03;
+        }
+      });
+    }
+    
+    // Initialize 3D object model display
+    function initModelViewer() {
+      const modelContainer = document.getElementById('model-viewer');
+      const modelScene = new THREE.Scene();
+      const modelCamera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+      
+      const modelRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      modelRenderer.setSize(128, 128);
+      modelRenderer.setClearColor(0x000000, 0);
+      modelContainer.appendChild(modelRenderer.domElement);
+      
+      // Create a simple 3D logo or object
+      const geometry = new THREE.TorusKnotGeometry(5, 1.5, 100, 16);
+      const material = new THREE.MeshPhongMaterial({ 
+        color: 0xbaf846,
+        shininess: 100,
+        specular: 0x86efac,
+        transparent: true,
+        opacity: 0.9
+      });
+      
+      const torusKnot = new THREE.Mesh(geometry, material);
+      modelScene.add(torusKnot);
+      
+      // Add lights
+      const pointLight = new THREE.PointLight(0xffffff, 1);
+      pointLight.position.set(10, 10, 10);
+      modelScene.add(pointLight);
+      
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+      modelScene.add(ambientLight);
+      
+      modelCamera.position.z = 20;
+      
+      // Animation function
+      function animateModel() {
+        requestAnimationFrame(animateModel);
+        
+        torusKnot.rotation.x += 0.01;
+        torusKnot.rotation.y += 0.02;
+        
+        modelRenderer.render(modelScene, modelCamera);
+      }
+      
+      animateModel();
+    }
+    
+    // Start everything after window load
+    window.onload = function() {
+      initThree();
+      initModelViewer();
+      
+      // Add some interactive behaviors
+      $('button, a').on('mouseover', function() {
+        $(this).addClass('icon-shake');
+        setTimeout(() => {
+          $(this).removeClass('icon-shake');
+        }, 820);
+      });
+      
+      // Removed card parallax/skewing effect
+    };
+  </script>
+</body>
 </html>

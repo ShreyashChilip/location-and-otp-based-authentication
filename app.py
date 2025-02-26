@@ -26,9 +26,9 @@ from twilio.rest import Client
 account_sid = keys.account_sid
 auth_token = keys.auth_token
 client = Client(account_sid, auth_token)
+from sqlalchemy import func
 
-
-AISSMS_COORDINATES = (18.505423 , 73.952885)
+AISSMS_COORDINATES = (18.531034 , 73.866298)
 
 @app.after_request
 def add_header(response):
@@ -82,7 +82,7 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     roll_no = db.Column(db.String(20), unique=True, nullable=False)
     name = db.Column(db.String(200), nullable=False)
-    email = db.Column(db.String(200), unique=True, nullable=False)
+    email = db.Column(db.String(200), unique=False, nullable=False)
     batch = db.Column(db.Integer, unique=False, nullable = False)
     phone_no = db.Column(db.String, unique=True, nullable = False)
     def __repr__(self):
@@ -166,6 +166,7 @@ def login():
             session['role'] = user.role
             return redirect(url_for('home'))
         else:
+            flash('Invalid Credentials','danger')
             return render_template('login.html', error="Invalid credentials")
 
     return render_template("login.html")
@@ -497,25 +498,33 @@ def submitAttendance():
 # Route for the OTP verification page
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
-    if request.method == 'POST':
-        entered_otp = request.form['otp']
-        subject = request.form.get('subject')
-        roll_no = current_user.username  # Get the current user's roll number
-        subject_parts = subject.split(' - ')
-        subject_name = subject_parts[0]
-        print(subject_name)
-            # Retrieve the OTP record from the database
-        otp_record = OTPRecord.query.filter_by(roll_no=roll_no,subject = subject_name).first()
-        print(f"roll_no: {roll_no}")
-        print(f"otp_record: {otp_record}")
-        if otp_record and otp_record.otp == entered_otp:
-            
-            return redirect(url_for('attendance_success'))
-        else:
-            flash('Invalid OTP. Please try again.', 'danger')
-       
-    return render_template('verify_otp.html')
+    try:
+        # Parse the JSON request body
+        data = request.get_json()
+        entered_otp = data.get('otp')
+        subject = data.get('subject')
 
+        if not entered_otp or not subject:
+            return jsonify({"status": "failed", "message": "Missing OTP or subject"}), 400
+
+        # Extract roll number and subject name
+        roll_no = current_user.username  # Get the current user's roll number
+        subject_name = subject.split(' - ')[0]  # Extract actual subject name
+
+        print(f"Received OTP: {entered_otp}, Subject: {subject_name}, Roll No: {roll_no}")
+
+        # Retrieve the OTP record from the database
+        otp_record = OTPRecord.query.filter_by(roll_no=roll_no, subject=subject_name).first()
+
+        if otp_record and otp_record.otp == entered_otp:
+            session['otp_verified'] = True
+            return jsonify({"status": "success", "message": "OTP verified successfully!"})
+        else:
+            return jsonify({"status": "failed", "message": "Invalid OTP. Please try again."})
+
+    except Exception as e:
+        print(f"Error verifying OTP: {str(e)}")
+        return jsonify({"status": "failed", "message": "An error occurred during OTP verification."}), 500
 
 
 
@@ -549,7 +558,7 @@ def verify_location():
         # Check if within 50 meters
         if distance <= 50:
             session['location_flag'] = True
-            return jsonify({"status": "success", "message": "Within range, redirect to OTP page."})
+            return jsonify({"status": "success", "message": "Within the range, Location verified!"})
         else:
             session['location_flag'] = False
             return jsonify({"status": "failed", "message": "Not within range."})
@@ -807,6 +816,23 @@ def submit_user_attendance():
             return jsonify({'status': 'failed', 'message': 'Location not verified. Please verify your location.'})
 
     return jsonify({'status': 'failed', 'message': 'Unknown error occurred.'})
+from sqlalchemy import text, cast,String
+@app.route("/show_records")
+def show_records():
+    total_students = db.session.query(func.count(Student.id)).scalar()  # ✅ Get total students count
 
+    records = (
+        db.session.query(
+            AttendanceRecord.subject,
+            AttendanceRecord.batch,
+            (cast(AttendanceRecord.date, String) + " " + AttendanceRecord.slot).label("date_time"),
+            func.count(func.nullif(AttendanceRecord.present == "n", True)).label("present_count"),
+            (total_students - func.count(func.nullif(AttendanceRecord.present == "n", True))).label("absent_count"),  # ✅ Fixed absent count
+        )
+        .group_by(AttendanceRecord.subject, AttendanceRecord.batch, AttendanceRecord.date, AttendanceRecord.slot)
+        .all()
+    )
+
+    return render_template("show_records.html", records=records)
 if __name__ == "__main__":
     app.run(debug=True)
