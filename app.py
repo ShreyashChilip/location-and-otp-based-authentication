@@ -28,7 +28,7 @@ auth_token = keys.auth_token
 client = Client(account_sid, auth_token)
 
 
-AISSMS_COORDINATES = (18.451306 , 73.820188)
+AISSMS_COORDINATES = (18.591486 , 73.796398)
 
 @app.after_request
 def add_header(response):
@@ -689,7 +689,7 @@ def post_attendance():
                     from_= keys.twilio_number,
                     body = f"""Your OTP for marking attendance is: {otp}
 
-@studious-umbrella-jw5g95949r7hpjrx-5000.app.github.dev #{otp}""",
+@attendance-rudb.onrender.com #{otp}""",
                     to=phone_no
                 )
                 print('OTP sent successfully',message.sid)
@@ -826,4 +826,4 @@ def get_otp():
 def auto_detect():
     return render_template('auto_detect.html')
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')
