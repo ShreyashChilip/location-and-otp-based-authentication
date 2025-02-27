@@ -826,4 +826,5 @@ def get_otp():
 def auto_detect():
     return render_template('auto_detect.html')
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0')
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=True, host='0.0.0.0',port=port)
