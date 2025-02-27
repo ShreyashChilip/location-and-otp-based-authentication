@@ -689,7 +689,7 @@ def post_attendance():
                     from_= keys.twilio_number,
                     body = f"""Your OTP for marking attendance is: {otp}
 
-@attendance-rudb.onrender.com #{otp}""",
+@attendance.koyeb.app #{otp}""",
                     to=phone_no
                 )
                 print('OTP sent successfully',message.sid)
