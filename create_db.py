@@ -1,118 +1,82 @@
 from app import app, db, Authenticate, TeacherMap, Student, bcrypt, AttendanceRecord, TimeTable, markedAttendance
 import pandas as pd
+
+
+def recreate_table():
+    with app.app_context():
+        # Drop the TeacherMap table if it exists
+        AttendanceRecord.__table__.drop(db.engine,checkfirst=True)
+        AttendancePost.__table__.drop(db.engine,checkfirst=True)
+
+        # Create the TeacherMap table
+        AttendanceRecord.__table__.create(db.engine)
+        AttendancePost.__table__.create(db.engine)
+        print(" recreated successfully")
+
 # Create an application context
 with app.app_context():
     try:
-        # Create the database and the db table
+        # Create all tables except TeacherMap (if not already created)
         db.create_all()
 
-        # Use session.no_autoflush context manager to disable autoflush temporarily
-        
-        # Use session.no_autoflush context manager to disable autoflush temporarily
-        with db.session.no_autoflush:
-            
-            df = pd.read_excel('student_data.xlsx')
-            # Insert user data
-            df = pd.read_excel('student_data.xlsx')
-            for index, row in df.iterrows():
-                authenticate = Authenticate(
-                    username=row['roll_no'],
-                    password=row['roll_no'],
-                    role = row['role']
-                )
-                db.session.add(authenticate)
-            
-            authenticate1 = Authenticate(
-                    username='sssonawane',
-                    password='sunil123',
-                    role = 'admin'
-                )
-            authenticate2 = Authenticate(
-                    username='vrpalandurkar',
-                    password='varsha123',
-                    role = 'admin'
-                )
-            authenticate3 = Authenticate(
-                    username='askhandagale',
-                    password='anjali123',
-                    role = 'admin'
-                )
-            authenticate4 = Authenticate(
-                    username='vvshetkar',
-                    password='vishal123',
-                    role = 'admin'
-                )
-            authenticate5 = Authenticate(
-                    username='rbgurav',
-                    password='rohini123',
-                    role = 'admin'
-                )
-            db.session.add(authenticate1)
-            db.session.add(authenticate2)
-            db.session.add(authenticate3)
-            db.session.add(authenticate4)
-            db.session.add(authenticate5)
-            # commit the changes without autoflush
-            db.session.commit()
+        # Recreate only TeacherMap table
+        recreate_teacher_map_table()
 
-            map1 = TeacherMap(
-                teacherName = "sssonawane",
-                subject = 'EST'
+        # Populate Authenticate and Student from student_data.xlsx
+        df_students = pd.read_excel('student_data.xlsx')
+        for index, row in df_students.iterrows():
+            authenticate = Authenticate(
+                username=row['roll_no'],
+                password=row['roll_no'],  # Consider hashing with bcrypt
+                role=row['role']
             )
-            map2 = TeacherMap(
-                teacherName = "vrpalandurkar",
-                subject = 'CSS'
+            student = Student(
+                roll_no=row['roll_no'],
+                name=row['name'],
+                email=row['email'],
+                batch=row['batch'],
+                phone_no='+91' + str(row['phone_no'])
             )
-            map3 = TeacherMap(
-                teacherName = "askhandagale",
-                subject = 'OSY'
+            db.session.add(authenticate)
+            db.session.add(student)
+
+        # Hardcoded admin users
+        admins = [
+            ("sssonawane", "sunil123", "admin"),
+            ("vrpalandurkar", "varsha123", "admin"),
+            ("askhandagale", "anjali123", "admin"),
+            ("vvshetkar", "vishal123", "admin"),
+            ("rbgurav", "rohini123", "admin")
+        ]
+        for username, password, role in admins:
+            auth = Authenticate(
+                username=username,
+                password=password,  # Consider hashing with bcrypt
+                role=role
             )
-            map4 = TeacherMap(
-                teacherName = "vvshetkar",
-                subject = 'EDE'
+            db.session.add(auth)
+
+        # Populate TimeTable from TimeTable.xlsx
+        df_timetable = pd.read_excel('TimeTable.xlsx')
+        for index, row in df_timetable.iterrows():
+            tb = TimeTable(
+                batch=row['batch'],
+                day=row['day'],
+                slot1=row['slot1'],
+                slot2=row['slot2'],
+                slot3=row['slot3'],
+                slot4=row['slot4'],
+                slot5=row['slot5'],
+                slot6=row['slot6'],
+                slot7=row['slot7'],
+                slot8=row['slot8'],
             )
-            map5 = TeacherMap(
-                teacherName = "rbgurav",
-                subject = 'DMA'
-            )
-            # Insert student data
-            db.session.add(map1)
-            db.session.add(map2)
-            db.session.add(map3)
-            db.session.add(map4)
-            db.session.add(map5)
+            db.session.add(tb)
 
-
-    # Iterate through rows and add data to the 'students' table
-            for index, row in df.iterrows():
-                student = Student(
-                    roll_no=row['roll_no'],
-                    name=row['name'],
-                    email = row['email'],
-                    batch = row['batch'],
-                    phone_no = '+91' + str(row['phone_no'])
-                )
-                db.session.add(student)
-
-            df = pd.read_excel('TimeTable.xlsx')
-
-    # Iterate through rows and add data to the 'students' table
-            for index, row in df.iterrows():
-                tb= TimeTable(
-                    batch = row['batch'],
-                    day = row['day'],
-                    slot1 = row['slot1'],
-                    slot2 = row['slot2'],
-                    slot3 = row['slot3'],
-                    slot4 = row['slot4'],
-                    slot5 = row['slot5'],
-                    slot6 = row['slot6'],
-                    slot7 = row['slot7'],
-                    slot8 = row['slot8'],
-                )
-                db.session.add(tb)
-
-            db.session.commit()
+        # Commit all changes
+        db.session.commit()
+        print("Database populated successfully (excluding initial TeacherMap data)")
 
     except Exception as e:
+        db.session.rollback()
         print(f"Error during database creation: {e}")

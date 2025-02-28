@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+    <!-- GSAP CDN Links -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <!-- Chart.js CDN Link -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@600&display=swap");
+    body {
+      background: #eaeef6;
+      font-family: "Open Sans", sans-serif;
+    }
+    .navbar {
+      background: #fff;
+      border-radius: 10px;
+      position:fixed;
+      width: 100%;
+      padding: 1rem 2rem;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.03);
+      z-index: 9999;
+    }
+    .navbar__link {
+      position: relative;
+      display: flex;
+      align-items: center;
+      color: #6a778e;
+      transition: 250ms ease all;
+      margin: 0 1rem;
+    }
+    .navbar__link span {
+      margin-left: 8px;
+      opacity: 1;
+      color: #406ff3;
+      background: #fff;
+      padding: 0.75rem;
+      transition: 250ms ease all;
+      border-radius: 17.5px;
+    }
+    .navbar__link:hover {
+      color: #fff;
+      background-color: #406ff3;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+    }
+    .navbar__menu {
+      display: flex;
+      align-items: center;
+    }
+    @media (min-width: 992px) {
+      .navbar__link span {
+        display: none;
+      }
+    }
+    @media (max-width: 991.98px) {
+      .navbar__link span {
+        display: inline;
+      }
+    }
+
+    /* Vertical Navbar Styles */
+    .vertical-navbar {
+      position: fixed;
+      top: 0;
+      right: -250px; /* Initially hidden off-screen */
+      width: 250px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+      transition: right 0.3s ease;
+      z-index: 1000;
+    }
+    .vertical-navbar__menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      padding-top: 60px;
+    }
+    .vertical-navbar__item {
+      padding: 1rem;
+      transition: background-color 0.3s ease;
+    }
+    .vertical-navbar__link {
+      display: flex;
+      align-items: center;
+      color: #6a778e;
+      text-decoration: none;
+      transition: color 0.3s ease, transform 0.2s ease;
+    }
+    .vertical-navbar__link i {
+      margin-right: 10px;
+    }
+    .vertical-navbar__link:hover {
+      color: #406ff3;
+      transform: translateX(10px);
+    }
+    .vertical-navbar__item:hover {
+      background-color: #f0f4ff;
+    }
+    .show-vertical-navbar {
+      right: 0; /* Slide in from the right */
+    }
+  </style>
+  {% block head %}
+        
+  {% endblock head %}
+  <title>{% block title %}
+        
+    {% endblock title %} - Yuki</title>
+</head>
+<body>
+  <!-- Horizontal Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light position-fixed">
+    <a class="navbar-brand" href="#" onmouseover="showVerticalNavbar()">Admin Console</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto navbar__menu">
+        <li class="nav-item active">
+          <a class="nav-link navbar__link" href="/admindas" ><i data-feather="home"></i><span>Home</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link navbar__link" href="/admintb" ><i data-feather="calendar"></i><span>Timetable</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link navbar__link" href="/adminacc" ><i data-feather="user-check"></i><span>Account</span></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link navbar__link" href="#"><i data-feather="shield"></i><span>Genearte OTP</span></a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Vertical Navbar -->
+  <nav class="vertical-navbar" id="verticalNavbar" onmouseleave="hideVerticalNavbar()">
+    <ul class="vertical-navbar__menu">
+      <li class="vertical-navbar__item">
+        <a href="#" class="vertical-navbar__link"><i data-feather="home"></i><span>Home</span></a>
+      </li>
+      <li class="vertical-navbar__item">
+        <a href="#" class="vertical-navbar__link"><i data-feather="calendar"></i><span>Timetable</span></a>
+      </li>
+      <li class="vertical-navbar__item">
+        <a href="#" class="vertical-navbar__link"><i data-feather="user-check"></i><span>Account</span></a>
+      </li>
+      <li class="vertical-navbar__item">
+        <a href="#" class="vertical-navbar__link"><i data-feather="shield"></i><span>Genearte OTP</span></a>
+      </li>
+     
+    </ul>
+  </nav>
+  <div class="main_content">
+    {% block body %}
+        
+    {% endblock body %}
+  </div>
+  <script>
+    feather.replace();
+
+    function showVerticalNavbar() {
+      document.getElementById('verticalNavbar').classList.add('show-vertical-navbar');
+    }
+
+    function hideVerticalNavbar() {
+      document.getElementById('verticalNavbar').classList.remove('show-vertical-navbar');
+    }
+
+    // Hide vertical navbar when clicking outside of it
+    document.addEventListener('mousedown', function(event) {
+      const verticalNavbar = document.getElementById('verticalNavbar');
+      const isClickInside = verticalNavbar.contains(event.target);
+      const isNavbarBrand = event.target.classList.contains('navbar-brand');
+
+      if (!isClickInside && !isNavbarBrand) {
+        hideVerticalNavbar();
+      }
+    });
+  </script>
+
+</body>
+</html>

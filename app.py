@@ -122,7 +122,7 @@ class OTPRecord(db.Model):
 
 class TeacherMap(db.Model):
     sno = db.Column(db.Integer, primary_key=True)
-    teacherName = db.Column(db.String(200), nullable=False, unique=True)
+    teacherName = db.Column(db.String(200), nullable=False)
     subject = db.Column(db.String(200), nullable=False)
 
 
@@ -139,13 +139,15 @@ class TimeTable(db.Model):
     slot7 = db.Column(db.String(200))
     slot8 = db.Column(db.String(200))
     def __repr__(self):
-        return f"{self.day}"
+        return f'<TimeTable {self.batch} - {self.day}>'
 
 class markedAttendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date,nullable=False)
     batch = db.Column(db.String(20),nullable=False)
     slot = db.Column(db.String(200),nullable=False)
+
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -173,6 +175,7 @@ def login():
 @app.route("/home")
 @login_required
 def home():
+
     return render_template("home.html") 
 
 
@@ -807,6 +810,86 @@ def submit_user_attendance():
             return jsonify({'status': 'failed', 'message': 'Location not verified. Please verify your location.'})
 
     return jsonify({'status': 'failed', 'message': 'Unknown error occurred.'})
+
+@app.route('/admintb', methods=['POST','GET'])
+def newadminmake():
+    timetable_data, batches, time_slots, days = get_full_timetable_data()
+    return render_template('admintimetable.html', 
+                         timetable=timetable_data,
+                         batches=batches,
+                         time_slots=time_slots,
+                         days=days)
+
+@app.route('/adminacc', methods=['POST',"GET"])
+def verify_otp_admin():
+    return render_template('adminaccount.html')
+
+@app.route('/admindas', methods=['POST', 'GET'])
+def admin_das():
+    return render_template("adminhome.html")
+
+@app.route('/submit_main', methods=['POST'])
+def submit_main():
+    data = request.get_json()
+    name = data.get('name')
+    num_subjects = data.get('numSubjects')
+    if not name or not num_subjects or num_subjects < 1:
+        return jsonify({'error': 'Invalid name or number of subjects'}), 400
+    return jsonify({'message': 'Main form submitted successfully'}), 200
+
+@app.route('/submit_subject', methods=['POST'])
+def submit_subjects():
+    data = request.get_json()
+    print("Received data:", data)
+    subjects = data.get('subjects')
+    name = data.get('name')
+
+    if not subjects or not name or not isinstance(subjects, list) or not all(subjects):
+        return jsonify({'error': 'Missing or invalid data'}), 400
+
+    try:
+        # Delete existing subjects for this teacher
+        TeacherMap.query.filter_by(teacherName=name).delete()
+        print(f"Deleted existing subjects for teacher: {name}")
+
+        # Insert new subjects
+        for subject in subjects:
+            teacher_entry = TeacherMap(teacherName=name, subject=subject)
+            db.session.add(teacher_entry)
+        db.session.commit()
+        print("Subjects updated successfully")
+        return jsonify({'message': 'Subjects updated successfully'}), 200
+    except Exception as e:
+        db.session.rollback()
+        print("Server error:", str(e))
+        return jsonify({'error': str(e)}), 500
+
+def get_full_timetable_data():
+    timetable_entries = TimeTable.query.all()
+    
+    time_slots = [
+        '9:00-10:00', '10:00-11:00', '11:00-12:00', '12:00-1:00',
+        '1:00-2:00', '2:00-3:00', '3:00-4:00', '4:00-5:00'
+    ]
+    days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+    batches = sorted(set(entry.batch for entry in timetable_entries))
+
+    # Structure: {time_slot: {day: {batch: info}}}
+    timetable = {slot: {day: {} for day in days} for slot in time_slots}
+
+    for entry in timetable_entries:
+        slots = [entry.slot1, entry.slot2, entry.slot3, entry.slot4,
+                 entry.slot5, entry.slot6, entry.slot7, entry.slot8]
+        for i, slot in enumerate(slots):
+            if slot:
+                subject, room_no = slot.split(' - ') if ' - ' in slot else (slot, 'TBA')
+                timetable[time_slots[i]][entry.day][entry.batch] = {
+                    'subject': subject,
+                    'room_no': room_no,
+                    'batch': entry.batch
+                }
+    
+    return timetable, batches, time_slots, days
 
 
 @app.route('/get_otp', methods=['POST'])

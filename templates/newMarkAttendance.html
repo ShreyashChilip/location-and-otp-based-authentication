@@ -53,95 +53,129 @@
     </div>
 
     <script>
-        
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
+            const otpInputs = document.querySelectorAll(".otp-box");
 
+            // Auto-fetch OTP using WebOTP API
             if ("OTPCredential" in window) {
-                window.addEventListener("DOMContentLoaded", () => {
-                    navigator.credentials.get({ otp: { transport: ["sms"] } }).then(otp => {
-                        const otpCode = otp.code.match(/(#\d{6})/)[0];
-                        alert("Auto-fetched OTP: " + otpCode);
-                    }).catch(err => console.error("Error fetching OTP", err));
+                const abortController = new AbortController();
+
+                navigator.credentials
+                    .get({
+                        otp: { transport: ["sms"] },
+                        signal: abortController.signal,
+                    })
+                    .then((otp) => {
+                        // Extract the OTP from the SMS
+                        const otpCode = otp.code.match(/\d{6}/)[0]; // Extract 6-digit OTP
+                        console.log("Auto-fetched OTP:", otpCode);
+
+                        // Auto-fill the OTP input fields
+                        autoFillOtp(otpCode);
+
+                        // Optionally, trigger OTP verification automatically
+                        checkOtpCompletion();
+                    })
+                    .catch((err) => {
+                        console.error("Error fetching OTP:", err);
+                    });
+
+                // Abort the OTP request if the user manually enters the OTP
+                otpInputs.forEach((input) => {
+                    input.addEventListener("input", () => {
+                        abortController.abort();
+                    });
                 });
             }
 
-            const otpInputs = document.querySelectorAll(".otp-box");
+            // Function to auto-fill OTP fields
+            function autoFillOtp(otp) {
+                otpInputs.forEach((input, index) => {
+                    input.value = otp[index] || "";
+                });
+            }
+
+            // Focus on the first OTP input field
             otpInputs[0].focus();
 
+            // Handle OTP input navigation
             otpInputs.forEach((input, index) => {
-                input.addEventListener("input", function() {
+                input.addEventListener("input", function () {
                     if (this.value.length === 1 && index < otpInputs.length - 1) {
                         otpInputs[index + 1].focus();
                     }
                     checkOtpCompletion();
                 });
-                
-                input.addEventListener("keydown", function(e) {
+
+                input.addEventListener("keydown", function (e) {
                     if (e.key === "Backspace" && !this.value && index > 0) {
                         otpInputs[index - 1].focus();
                     }
                 });
             });
 
+            // Function to check if OTP is complete and verify it
             function checkOtpCompletion() {
-                const otp = Array.from(otpInputs).map(input => input.value).join("");
+                const otp = Array.from(otpInputs).map((input) => input.value).join("");
                 if (otp.length === otpInputs.length) {
                     verifyOtp(otp);
                 }
             }
 
+            // Function to verify OTP with the server
             function verifyOtp(otp) {
                 const messagesDiv = document.getElementById("otpMessages");
                 fetch("/verify_otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ otp: otp, subject: "{{ subject }}" })
+                    body: JSON.stringify({ otp: otp, subject: "{{ subject }}" }),
                 })
-                .then(response => response.json())
-                .then(data => {
-                    const messageElement = document.createElement("p");
-                    messageElement.textContent = data.message;
-                    
-                    if (data.status === "success") {
-                        messageElement.classList.add("text-success");
-                        otpInputs.forEach(input => input.disabled = true);
-                    } else {
+                    .then((response) => response.json())
+                    .then((data) => {
+                        const messageElement = document.createElement("p");
+                        messageElement.textContent = data.message;
+
+                        if (data.status === "success") {
+                            messageElement.classList.add("text-success");
+                            otpInputs.forEach((input) => (input.disabled = true));
+                        } else {
+                            messageElement.classList.add("text-danger");
+                        }
+
+                        messagesDiv.innerHTML = "";
+                        messagesDiv.appendChild(messageElement);
+                    })
+                    .catch((error) => {
+                        const messageElement = document.createElement("p");
+                        messageElement.textContent = "Error verifying OTP. Please try again.";
                         messageElement.classList.add("text-danger");
-                    }
-                    
-                    messagesDiv.innerHTML = "";
-                    messagesDiv.appendChild(messageElement);
-                })
-                .catch(error => {
-                    const messageElement = document.createElement("p");
-                    messageElement.textContent = "Error verifying OTP. Please try again.";
-                    messageElement.classList.add("text-danger");
-                    messagesDiv.innerHTML = "";
-                    messagesDiv.appendChild(messageElement);
-                });
+                        messagesDiv.innerHTML = "";
+                        messagesDiv.appendChild(messageElement);
+                    });
             }
         });
 
-        document.getElementById("submitAttendance").addEventListener("click", function() {
+        // Handle attendance submission
+        document.getElementById("submitAttendance").addEventListener("click", function () {
             fetch("/submit_user_attendance", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     formatted_date: "{{ formatted_date }}",
                     formatted_time: "{{ formatted_time }}",
-                    subject: "{{ subject }}"
+                    subject: "{{ subject }}",
+                }),
+            })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.status === "failed") {
+                        alert(data.message);
+                    }
+                    if (data.status === "success") {
+                        window.location.replace("/home");
+                    }
                 })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'failed') {
-                    alert(data.message);
-                }
-                if (data.status === 'success') {
-                    window.location.replace("/home");
-                }
-            })
-            .catch(error => alert("An error occurred: " + error));
+                .catch((error) => alert("An error occurred: " + error));
         });
     </script>
 {% endblock body %}

@@ -1,0 +1,136 @@
+{% extends 'base1.html' %}
+{% block title %}
+{% endblock title %}
+{% block head %}
+{% endblock head %}
+{% block body %}
+<style>
+    .timetable-wrapper {
+      padding: 120px 20px 40px;
+      max-width: 100%;
+      margin: 0 auto;
+      overflow-x: auto;
+    }
+
+    .timetable {
+      width: 100%;
+      border-collapse: collapse;
+      background: linear-gradient(135deg, #f6f8fc 0%, #d9e4f5 100%);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.12);
+    }
+
+    .timetable th, .timetable td {
+      padding: 15px;
+      text-align: center;
+      border: 5px solid transparent;
+      min-width: 150px;
+      vertical-align: top;
+    }
+
+    .timetable th {
+      background: linear-gradient(45deg, #ff4757, #ff6b81);
+      color: white;
+      font-size: 1.1em;
+      text-transform: uppercase;
+      border-radius: 12px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .timetable td {
+      background: rgba(255,255,255,0.95);
+      border-radius: 15px;
+      position: relative;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    }
+
+    .timetable td.math { background: linear-gradient(45deg, #ff4757, #ff7f95); color: white; }
+    .timetable td.science { background: linear-gradient(45deg, #00ddeb, #40c4ff); color: white; }
+    .timetable td.english { background: linear-gradient(45deg, #1e90ff, #87cefa); color: white; }
+    .timetable td.history { background: linear-gradient(45deg, #ffa502, #ffca28); color: white; }
+    .timetable td.art { background: linear-gradient(45deg, #7befb2, #54d98c); color: white; }
+
+    .timetable td.time-slot {
+      background: linear-gradient(45deg, #2c3e50, #4a69bd);
+      color: white;
+      font-weight: 700;
+    }
+
+    .timetable td.null {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .subject-info {
+      font-size: 0.9em;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+
+    .room-no {
+      font-size: 0.8em;
+      opacity: 0.9;
+    }
+
+    @media (max-width: 991px) {
+      .timetable-wrapper { overflow-x: auto; }
+      .timetable th, .timetable td { min-width: 120px; }
+    }
+
+    @media (max-width: 576px) {
+      .timetable-wrapper { padding: 100px 15px 20px; }
+      .timetable th, .timetable td { padding: 12px; font-size: 0.85em; min-width: 100px; }
+    }
+  </style>
+  <div class="main_content">
+    <div class="timetable-wrapper">
+      {% if timetable %}
+        <h2 class="text-center mb-4">Full Timetable</h2>
+        <table class="timetable">
+          <thead>
+            <tr>
+              <th>Time</th>
+              {% for day in days %}
+                <th>{{ day }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for time_slot in time_slots %}
+              <tr>
+                <td class="time-slot">{{ time_slot }}</td>
+                {% for day in days %}
+                  <td>
+                    {% for batch in batches %}
+                      {% if timetable[time_slot][day][batch] %}
+                        {% set subject_class = timetable[time_slot][day][batch].subject|lower %}
+                        <div class="{{ subject_class }} subject-info">
+                          {{ timetable[time_slot][day][batch].subject }}<br>
+                          Batch: {{ timetable[time_slot][day][batch].batch }}<br>
+                          <span class="room-no">Room: {{ timetable[time_slot][day][batch].room_no }}</span>
+                        </div>
+                      {% endif %}
+                    {% endfor %}
+                    {% if not timetable[time_slot][day]|length %}
+                      <div class="null">Null</div>
+                    {% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-center">No timetable data available</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    feather.replace();
+  </script>
+{% endblock body %}

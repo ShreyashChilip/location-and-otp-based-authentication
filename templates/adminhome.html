@@ -1,0 +1,1259 @@
+{% extends 'base1.html' %}
+{% block title %}
+Admin Dashboard
+{% endblock title %}
+{% block head %}
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="static/fonts/icomoon/style.css">
+<link rel="stylesheet" href="static/css/owl.carousel.min.css">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="static/css/bootstrap.min.css">
+<!-- Style -->
+<link rel="stylesheet" href="static/css/tablestyle.css">
+{% endblock head %}
+{% block body %}
+<style>
+    * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+    /* General Styles */
+:root {
+    --light-bg: #ffffff;
+    --light-text: #333333;
+    --light-border: #dddddd;
+    --light-shadow: rgba(0, 0, 0, 0.1);
+    --light-button-bg: #4CAF50;
+    --light-button-hover: #45a049;
+    --dark-bg: #1e1e1e;
+    --dark-text: #f0f0f0;
+    --dark-border: #444444;
+    --dark-shadow: rgba(255, 255, 255, 0.1);
+    --dark-button-bg: #388e3c;
+    --dark-button-hover: #2e7d32;
+}
+
+body.dark-mode {
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+.data_container {
+    overflow-x: hidden;
+    margin: 0; /* Remove any potential container margins */
+    padding: 0;
+}
+
+.canvas-container {
+    height: auto;
+    position: relative;
+    margin: 0;
+    padding: 0;
+}
+
+.canvas {
+    width: 100vw;
+    min-height: fit-content; /* Changed to fit-content to ensure it takes content height */
+    height: auto; /* Allow natural height based on content */
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* Changed from center to flex-start to prevent vertical stretching */
+    font-size: 24px;
+    color: white;
+    font-weight: bold;
+    padding: 20px;
+    box-sizing: border-box;
+    margin: 0; /* Ensure no margins between canvases */
+}
+
+#canvas1 {
+    background: lightblue;
+    min-height: 100vh; /* Full viewport height to allow centering */
+    height: auto;
+    justify-content: center; /* Center vertically */
+    align-items: center; /* Center horizontally */ /* Give first canvas a reasonable minimum height */
+}
+
+#canvas2 {
+    background: lightcoral;
+}
+
+#canvas3 {
+    background: lightgreen;
+}
+
+#canvas4 {
+    background: lightyellow;
+}
+
+/* Ensure the responsive container inside canvas4 fits properly */
+.responsive-container-block.bigContainer {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    height: auto;
+}
+/* Teacher Card Styling */
+.teacher-card-container {
+    width: 90%; /* Make the card responsive */
+    max-width: 400px;
+    margin: 20px auto;
+    border: 1px solid var(--light-border);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 15px var(--light-shadow);
+    background: linear-gradient(135deg, #f9f9f9, #e0e0e0);
+    background-size: 200% 200%;
+    animation: gradientAnimation 8s ease infinite;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+body.dark-mode .teacher-card-container {
+    border-color: var(--dark-border);
+    box-shadow: 0 4px 15px var(--dark-shadow);
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    background-size: 200% 200%;
+}
+
+.teacher-card-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 70%);
+    animation: pulse 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes gradientAnimation {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.2;
+    }
+    100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+}
+
+.teacher-card-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px var(--light-shadow);
+}
+
+body.dark-mode .teacher-card-container:hover {
+    box-shadow: 0 8px 20px var(--dark-shadow);
+}
+
+.teacher-card-hidden {
+    display: none;
+}
+
+#cardContent {
+    animation: slideIn 0.5s ease-in-out;
+}
+
+.card-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+    color: var(--light-text);
+    animation: textGlow 2s ease-in-out infinite;
+}
+
+body.dark-mode .card-title {
+    color: var(--dark-text);
+}
+
+@keyframes textGlow {
+    0% {
+        text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+    50% {
+        text-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+    }
+    100% {
+        text-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+    }
+}
+
+.card-subtitle {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    color: #666666;
+}
+
+body.dark-mode .card-subtitle {
+    color: #aaaaaa;
+}
+
+.card-text {
+    font-size: 1rem;
+    margin-bottom: 20px;
+    color: var(--light-text);
+}
+
+body.dark-mode .card-text {
+    color: var(--dark-text);
+}
+
+#lockButton {
+    background: transparent;
+    border: 1px solid var(--light-border);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: var(--light-text);
+    animation: buttonPulse 2s ease-in-out infinite;
+}
+
+body.dark-mode #lockButton {
+    border-color: var(--dark-border);
+    color: var(--dark-text);
+}
+
+@keyframes buttonPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+#lockButton:hover {
+    background: var(--light-button-bg);
+    color: white;
+}
+
+body.dark-mode #lockButton:hover {
+    background: var(--dark-button-bg);
+}
+
+.teacher-card-form {
+    margin-top: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.teacher-card-label {
+    display: block;
+    margin: 10px 0 5px;
+    color: var(--light-text);
+}
+
+body.dark-mode .teacher-card-label {
+    color: var(--dark-text);
+}
+
+.teacher-card-input[type="text"],
+.teacher-card-input[type="number"] {
+    width: 80%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--light-border);
+    border-radius: 4px;
+    background-color: var(--light-bg);
+    color: var(--light-text);
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .teacher-card-input[type="text"],
+body.dark-mode .teacher-card-input[type="number"] {
+    border-color: var(--dark-border);
+    background-color: var(--dark-bg);
+    color: var(--dark-text);
+}
+
+.teacher-card-submit {
+    background: var(--light-button-bg);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+body.dark-mode .teacher-card-submit {
+    background: var(--dark-button-bg);
+}
+
+.teacher-card-submit:hover {
+    background: var(--light-button-hover);
+}
+
+body.dark-mode .teacher-card-submit:hover {
+    background: var(--dark-button-hover);
+}
+
+.teacher-card-submit:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+.chart-container {
+    width: 90%;
+    max-width: 800px;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex; /* Ensure chart stays centered within container */
+    justify-content: center;
+    align-items: center;
+}
+
+#chartjs-dashboard-line {
+    width: 100% !important; /* Make the canvas responsive */
+    height: 400px !important; /* Set a fixed height */
+}
+
+/* Button Styling */
+.buttondb {
+    margin: 1rem;
+    padding: 1.3em 3em;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    font-weight: 500;
+    color: #000;
+    background-color: #fff;
+    border: none;
+    border-radius: 45px;
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease 0s;
+    cursor: pointer;
+    outline: none;
+}
+
+.buttondb:hover {
+    background-color: #23c483;
+    box-shadow: 0px 15px 20px rgba(46, 229, 157, 0.4);
+    color: #fff;
+    transform: translateY(-7px);
+}
+
+.buttondb:active {
+    transform: translateY(-1px);
+}
+
+/* Table Styling */
+.table-responsive {
+    width: 90%;
+    max-width: 1000px;
+    overflow-x: auto;
+}
+
+.custom-table {
+    width: 100%;
+    font-size: 14px;
+}
+
+.custom-table th,
+.custom-table td {
+    padding: 12px;
+    text-align: left;
+}
+
+.custom-table thead th {
+    background-color: #007bff;
+    color: white;
+}
+
+.custom-table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.custom-table tbody tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .canvas {
+        min-height: auto; /* Allow canvas to shrink on smaller screens */
+        height: auto; /* Adjust height dynamically */
+        padding: 10px; /* Reduce padding for smaller screens */
+    }
+
+    .chart-container {
+        width: 100%; /* Full width on smaller screens */
+    }
+
+    .teacher-card-container {
+        width: 100%; /* Full width on smaller screens */
+        padding: 15px;
+    }
+
+    .teacher-card-input[type="text"],
+    .teacher-card-input[type="number"] {
+        width: 100%; /* Full width on smaller screens */
+    }
+    .responsive-container-block.bigContainer {
+        flex-direction: column !important; /* Stack items vertically */
+        justify-content: flex-start !important; /* Align from top */
+        align-items: center !important; /* Center items horizontally */
+    }
+
+    .responsive-container-block.Container {
+        margin-right: 0 !important; /* Remove right margin on mobile */
+        margin-bottom: 20px !important; /* Add space between image and text */
+        width: 100% !important; /* Full width on mobile */
+    }
+.mainImg {
+    width: 100%;
+    height: 800px;
+    object-fit: cover;
+}
+
+.blueDots {
+    position: absolute;
+    top: 150px;
+    right: 15%;
+    z-index: -1;
+    left: auto;
+    width: 80%;
+    height: 500px;
+    object-fit: cover;
+}
+
+.imgContainer {
+        display: flex !important; /* Ensure images are centered */
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+.responsive-container-block.textSide {
+        width: 100% !important; /* Full width on mobile */
+        text-align: center; /* Center text for better mobile appearance */
+    }
+
+}
+
+/* New CSS for About Us Section */
+
+.text-blk.heading {
+    font-size: 36px;
+    line-height: 40px;
+    font-weight: 700;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 20px;
+    margin-left: 0px;
+}
+
+.text-blk.subHeading {
+    font-size: 18px;
+    line-height: 26px;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 20px;
+    margin-left: 0px;
+}
+
+.cardImg {
+    width: 31px;
+    height: 31px;
+}
+
+.cardImgContainer {
+    padding-top: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-style: solid;
+    border-right-style: solid;
+    border-bottom-style: solid;
+    border-left-style: solid;
+    border-top-color: rgb(229, 229, 229);
+    border-right-color: rgb(229, 229, 229);
+    border-bottom-color: rgb(229, 229, 229);
+    border-left-color: rgb(229, 229, 229);
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-width: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    margin-top: 0px;
+    margin-right: 10px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+}
+
+.responsive-cell-block.wk-desk-6.wk-ipadp-6.wk-tab-12.wk-mobile-12 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 10px;
+    padding-right: 15px;
+    padding-bottom: 10px;
+    padding-left: 0px;
+}
+
+.text-blk.cardHeading {
+    font-size: 18px;
+    line-height: 28px;
+    font-weight: 700;
+    margin-top: 0px;
+    margin-right: 0px;
+    margin-bottom: 10px;
+    margin-left: 0px;
+}
+
+.text-blk.cardSubHeading {
+    color: rgb(153, 153, 153);
+    line-height: 22px;
+}
+
+.explore {
+    font-size: 18px;
+    line-height: 20px;
+    font-weight: 700;
+    color: white;
+    background-color: rgb(244, 152, 146);
+    box-shadow: rgba(244, 152, 146, 0.25) 0px 10px 20px;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    cursor: pointer;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-style: initial;
+    border-right-style: initial;
+    border-bottom-style: initial;
+    border-left-style: initial;
+    border-top-color: initial;
+    border-right-color: initial;
+    border-bottom-color: initial;
+    border-left-color: initial;
+    border-image-source: initial;
+    border-image-slice: initial;
+    border-image-width: initial;
+    border-image-outset: initial;
+    border-image-repeat: initial;
+    padding-top: 17px;
+    padding-right: 40px;
+    padding-bottom: 17px;
+    padding-left: 40px;
+}
+
+.explore:hover {
+    background-image: initial;
+    background-position-x: initial;
+    background-position-y: initial;
+    background-size: initial;
+    background-repeat-x: initial;
+    background-repeat-y: initial;
+    background-attachment: initial;
+    background-origin: initial;
+    background-clip: initial;
+    background-color: rgb(244, 182, 176);
+}
+
+#ixvck {
+    margin-top: 60px;
+    margin-right: 0px;
+    margin-bottom: 0px;
+    margin-left: 0px;
+}
+
+.redDots {
+    position: absolute;
+    bottom: -350px;
+    right: -100px;
+    height: 500px;
+    width: 400px;
+    object-fit: cover;
+    top: auto;
+}
+
+@media (max-width: 1024px) {
+    .responsive-container-block.Container {
+        position: relative;
+        align-items: flex-start;
+        justify-content: center;
+    }
+
+    .mainImg {
+        bottom: 0px;
+    }
+
+    .imgContainer {
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        height: auto;
+        width: 60%;
+    }
+
+    .responsive-container-block.textSide {
+        margin-top: 0px;
+        margin-right: 0px;
+        margin-bottom: 0px;
+        margin-left: auto;
+        width: 70%;
+    }
+
+    .responsive-container-block.Container {
+        flex-direction: column-reverse;
+    }
+
+    .imgContainer {
+        position: relative;
+        width: auto;
+        margin-top: 0px;
+        margin-right: auto;
+        margin-bottom: 0px;
+        margin-left: auto;
+    }
+
+    .responsive-container-block.textSide {
+        margin-top: 0px;
+        margin-right: 0px;
+        margin-bottom: 20px;
+        margin-left: 0px;
+        width: 100%;
+    }
+
+    .responsive-container-block.Container {
+        flex-direction: row-reverse;
+    }
+
+    .responsive-container-block.Container {
+        flex-direction: column-reverse;
+    }
+}
+
+@media (max-width: 768px) {
+    .responsive-container-block.textSide {
+        width: 100%;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .text-blk.subHeading {
+        text-align: center;
+        font-size: 17px;
+        max-width: 520px;
+    }
+
+    .text-blk.heading {
+        text-align: center;
+    }
+
+    .imgContainer {
+        opacity: 0.8;
+    }
+
+    .imgContainer {
+        height: 500px;
+    }
+
+    .imgContainer {
+        width: 30px;
+    }
+
+    .responsive-container-block.Container {
+        flex-direction: column-reverse;
+    }
+
+    .responsive-container-block.Container {
+        flex-wrap: nowrap;
+    }
+
+    .responsive-container-block.textSide {
+        width: 100%;
+        margin-top: 0px;
+        margin-right: 0px;
+        margin-bottom: 20px;
+        margin-left: 0px;
+    }
+
+    .imgContainer {
+        width: 90%;
+    }
+
+    .imgContainer {
+        height: 450px;
+        margin-top: 5px;
+        margin-right: 33.9062px;
+        margin-bottom: 0px;
+        margin-left: 33.9062px;
+    }
+
+    .redDots {
+        display: none;
+    }
+
+    .explore {
+        font-size: 16px;
+        line-height: 14px;
+    }
+}
+
+@media (max-width: 500px) {
+    .imgContainer {
+        position: static;
+        height: 450px;
+    }
+
+    .mainImg {
+        height: 100%;
+    }
+
+    .blueDots {
+        width: 100%;
+        left: 0px;
+        top: 0px;
+        bottom: auto;
+        right: auto;
+    }
+
+    .imgContainer {
+        width: 100%;
+    }
+
+    .responsive-container-block.textSide {
+        margin-top: 0px;
+        margin-right: 0px;
+        margin-bottom: 0px;
+        margin-left: 0px;
+    }
+
+    .responsive-container-block.Container {
+        padding-top: 0px;
+        padding-right: 0px;
+        padding-bottom: 0px;
+        padding-left: 0px;
+        overflow-x: visible;
+        overflow-y: visible;
+    }
+
+    .responsive-container-block.bigContainer {
+        padding-top: 10px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        padding-left: 20px;
+        padding: 0 30px 0 30px;
+    }
+
+    .redDots {
+        display: none;
+    }
+
+    .text-blk.subHeading {
+        font-size: 16px;
+        line-height: 23px;
+    }
+
+    .text-blk.heading {
+        font-size: 28px;
+        line-height: 28px;
+    }
+
+    .responsive-container-block.textSide {
+        margin-top: 40px;
+        margin-right: 0px;
+        margin-bottom: 50px;
+        margin-left: 0px;
+    }
+
+    .imgContainer {
+        margin-top: 5px;
+        margin-right: auto;
+        margin-bottom: 0px;
+        margin-left: auto;
+        width: 100%;
+        position: relative;
+    }
+
+    .explore {
+        padding-top: 17px;
+        padding-right: 0px;
+        padding-bottom: 17px;
+        padding-left: 0px;
+        width: 100%;
+    }
+
+    #ixvck {
+        width: 90%;
+        margin-top: 40px;
+        margin-right: 0px;
+        margin-bottom: 0px;
+        margin-left: 0px;
+        font-size: 15px;
+    }
+
+    .blueDots {
+        bottom: 0px;
+        width: 100%;
+        height: 80%;
+        top: 10%;
+    }
+
+    .text-blk.cardHeading {
+        font-size: 16px;
+        margin-top: 0px;
+        margin-right: 0px;
+        margin-bottom: 8px;
+        margin-left: 0px;
+        line-height: 25px;
+    }
+
+    .responsive-cell-block.wk-desk-6.wk-ipadp-6.wk-tab-12.wk-mobile-12 {
+        padding-top: 10px;
+        padding-right: 0px;
+        padding-bottom: 10px;
+        padding-left: 0px;
+    }
+}
+</style>
+<div class="data_container">
+    <div class="canvas-container">
+        <!-- First Canvas with Chart -->
+        <div id="canvas1" class="canvas">
+            <div class="chart-container">
+                <canvas id="chartjs-dashboard-line" class="chart-line"></canvas>
+            </div>
+        </div>
+        <!-- Second Canvas with Table -->
+        <div id="canvas2" class="canvas">
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+
+                            </th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Subject</th>
+                            <th scope="col">Class</th>
+                            <th scope="col">Batch</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr scope="row">
+                            <th scope="row">
+                               
+                            </th>
+                            <td>1392</td>
+                            <td><a href="#">James Yates</a></td>
+                            <td>
+                                Web Designer
+                                <small class="d-block">Far far away, behind the word mountains</small>
+                            </td>
+                            <td>+63 983 0962 971</td>
+                          
+                        </tr>
+                        <tr class="spacer"><td colspan="100"></td></tr>
+                        <tr>
+                            <th scope="row">
+                                
+                            </th>
+                            <td>4616</td>
+                            <td><a href="#">Matthew Wasil</a></td>
+                            <td>
+                                Graphic Designer
+                                <small class="d-block">Far far away, behind the word mountains</small>
+                            </td>
+                            <td>+02 020 3994 929</td>
+                        </tr>
+                        <tr class="spacer"><td colspan="100"></td></tr>
+                        <tr>
+                            <th scope="row">
+                              
+                            </th>
+                            <td>9841</td>
+                            <td><a href="#">Sampson Murphy</a></td>
+                            <td>
+                                Mobile Dev
+                                <small class="d-block">Far far away, behind the word mountains</small>
+                            </td>
+                            <td>+01 352 1125 0192</td>
+                         
+                        </tr>
+                        <tr class="spacer"><td colspan="100"></td></tr>
+                        <tr>
+                            <th scope="row">
+                               
+                            </th>
+                            <td>9548</td>
+                            <td><a href="#">Gaspar Semenov</a></td>
+                            <td>
+                                Illustrator
+                                <small class="d-block">Far far away, behind the word mountains</small>
+                            </td>
+                            <td>+92 020 3994 929</td>
+                            
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Third Canvas -->
+        <div id="canvas3" class="canvas">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <!-- First Card -->
+                    <div class="col-lg-6 col-md-8 col-sm-10 mb-4">
+                        <div class="teacher-card-container">
+                            <div class="card-body">
+                                <h5 class="card-title text-dark">Announcements</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">This Accouncement will be display to all others</h6>
+                                <p class="card-text">Send Any Announcements</p>
+                                <div class="form-group">
+                                    <textarea class="form-control" rows="5" id="comment"></textarea>
+                                    <!-- From Uiverse.io by JaydipPrajapati1910 -->
+                                    <button class="buttondb">Submit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Second Card -->
+                    <div class="col-lg-6 col-md-8 col-sm-10 mb-4">
+                        <div class="teacher-card-container">
+                          <div id="cardContent">
+                            <h5 class="card-title">Modify Subject</h5>
+                            <h6 class="card-subtitle"></h6>
+                            <p class="card-text">Change the previous subject that you are teaching for.</p>
+                            <button id="lockButton" class="buttondb">Unlock</button>
+                          </div>
+                          <form id="mainForm" class="teacher-card-form teacher-card-hidden">
+                            <label class="teacher-card-label" for="name">Your Name:</label>
+                            <input class="teacher-card-input" type="text" id="name" name="name" required>
+                            <label class="teacher-card-label" for="numSubjects">Number of Subjects:</label>
+                            <input class="teacher-card-input" type="number" id="numSubjects" name="numSubjects" min="1" required>
+                            <button type="submit" id="mainSubmit" class="buttondb">Submit</button>
+                          </form>
+                          <form id="subjectForm" class="teacher-card-form teacher-card-hidden">
+                            <div id="subjectInputs"></div>
+                            <button type="submit" id="subjectSubmit" class="buttondb">Submit Subjects</button>
+                          </form>
+                        </div>
+                      </div>
+                </div>
+            </div>
+        </div>
+        <!-- Fourth Canvas -->
+        <div id="canvas4" class="canvas">
+            <div class="responsive-container-block bigContainer" style="display: flex; justify-content: space-between;">
+                <div class="responsive-container-block Container" style="margin-right: 20px;">
+                    <div class="imgContainer" style="display: inline-block;">
+
+                        <img class="mainImg" src="https://workik-widget-assets.s3.amazonaws.com/widget-assets/images/aw2.svg" style="display: inline-block;">
+                    </div>
+                </div>
+                <div class="responsive-container-block textSide" style="display: inline-block;">
+                    <p class="text-blk text-dark heading" style="display: inline-block; margin: 0;">
+                        About Us
+                    </p>
+                    <p class="text-blk subHeading" style="display: inline-block; margin: 10px 0;">
+                        This Code is been made by Team Axinons as this code is about the Attendance in which we are using geoloaction and otp GEneration through which the OTP is checked and and the attendance of the student will be achieved through it. 
+                    </p>
+                    <div class="responsive-cell-block wk-desk-6 wk-ipadp-6 wk-tab-12 wk-mobile-12" style="display: inline-block; width: 100%;">
+   
+                        <div class="cardText" style="display: inline-block; width: 75%;">
+                            <p class="text-blk text-dark" style="display: inline-block; margin: 0;">
+                                Team Members  
+                            </p>
+                        </div>
+                    </div>
+                    <div class="responsive-cell-block wk-desk-6 wk-ipadp-6 wk-tab-12 wk-mobile-12" style="display: inline-block; width: 100%;">
+                        <div class="cardImgContainer" style="display: inline-block; vertical-align: top; width: 20%;">
+                            <img class="cardImg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR169g3jplCJLKBSl7Gv7eAYaCtcPeQBpr9CA&s" style="display: inline-block;">
+                        </div>
+                        <div class="cardText" style="display: inline-block; width: 75%;">
+                            <p class="text-blk cardHeading" style="display: inline-block; margin: 0;">
+                                Arnav Ghule
+                            </p>
+                            <p class="text-blk cardSubHeading" style="display: inline-block; margin: 5px 0;">
+                                Diploma in IT Enigneering
+                            </p>
+                        </div>
+                    </div>
+                    <div class="responsive-cell-block wk-desk-6 wk-ipadp-6 wk-tab-12 wk-mobile-12" style="display: inline-block; width: 100%;">
+                        <div class="cardImgContainer" style="display: inline-block; vertical-align: top; width: 20%;">
+                            <img class="cardImg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR169g3jplCJLKBSl7Gv7eAYaCtcPeQBpr9CA&s" style="display: inline-block;">
+                        </div>
+                        <div class="cardText" style="display: inline-block; width: 75%;">
+                            <p class="text-blk cardHeading" style="display: inline-block; margin: 0;">
+                                TEam 2 name    
+                            </p>
+                            <p class="text-blk cardSubHeading" style="display: inline-block; margin: 5px 0;">
+                                Diploma in IT Enigneering
+                            </p>
+                        </div>
+                    </div>
+                    <div class="responsive-cell-block wk-desk-6 wk-ipadp-6 wk-tab-12 wk-mobile-12" style="display: inline-block; width: 100%;">
+                        <div class="cardImgContainer" style="display: inline-block; vertical-align: top; width: 20%;" >
+                            <img class="cardImg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR169g3jplCJLKBSl7Gv7eAYaCtcPeQBpr9CA&sg" style="display: inline-block;"/>
+                        </div>
+                        <div class="cardText" style="display: inline-block; width: 75%;">
+                            <p class="text-blk cardHeading" style="display: inline-block; margin: 0;">
+                                TEam 3 name
+                            </p>
+                            <p class="text-blk cardSubHeading" style="display: inline-block; margin: 5px 0;">
+                                Diploma in IT Enigneering
+                            </p>
+                        </div>
+                        
+                    </div>
+                    <div class="responsive-cell-block wk-desk-6 wk-ipadp-6 wk-tab-12 wk-mobile-12" style="display: inline-block; width: 100%;">
+                        <div class="cardImgContainer" style="display: inline-block; vertical-align: top; width: 20%;">
+                            <img class="cardImg" src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR169g3jplCJLKBSl7Gv7eAYaCtcPeQBpr9CA&s" style="display: inline-block;">
+                        </div>
+                        <div class="cardText" style="display: inline-block; width: 75%;">
+                            <p class="text-blk cardHeading" style="display: inline-block; margin: 0;">
+                                TEam 4 name
+                            </p>
+                            <p class="text-blk cardSubHeading" style="display: inline-block; margin: 5px 0;">
+                                Diploma in IT Enigneering
+                            </p>
+                        </div>
+                        
+                    </div>
+                    <a style="display: inline-block;">
+                        <button class="explore" style="display: inline-block; margin-top: 10px;">
+                            Explore our Services
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GSAP CDN Links -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<!-- Chart.js CDN Link -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // GSAP ScrollTrigger Configuration
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.to(".canvas-container", {
+        yPercent: -1, /* Move 300% up to show all 4 canvases */
+        ease: "none",
+        scrollTrigger: {
+            trigger: ".canvas-container",
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+            pin: true,
+            snap: 1 / 4, /* Snap to each canvas */
+        }
+    });
+
+    // Chart Initialization
+    document.addEventListener("DOMContentLoaded", function () {
+        var chartCanvas = document.getElementById('chartjs-dashboard-line');
+        var ctx = chartCanvas.getContext("2d");
+
+        var gradient = ctx.createLinearGradient(0, 0, 0, 225);
+        gradient.addColorStop(0, "rgba(215, 227, 244, 1)");
+        gradient.addColorStop(1, "rgba(215, 227, 244, 0)");
+
+        var primaryColor = "#007bff"; // Replace with your desired color
+
+        new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                datasets: [{
+                    label: "Sales ($)",
+                    fill: true,
+                    backgroundColor: gradient,
+                    borderColor: primaryColor,
+                    data: [
+                        2115,
+                        1562,
+                        1584,
+                        1892,
+                        1587,
+                        1923,
+                        2566,
+                        2448,
+                        2805,
+                        3438,
+                        2917,
+                        3327
+                    ]
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            stepSize: 1000
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    });
+    const lockButton = document.getElementById('lockButton');
+const cardContent = document.getElementById('cardContent');
+const mainForm = document.getElementById('mainForm');
+const subjectForm = document.getElementById('subjectForm');
+const mainSubmit = document.getElementById('mainSubmit');
+const subjectSubmit = document.getElementById('subjectSubmit');
+let teacherName = '';
+
+lockButton.addEventListener('click', () => {
+    cardContent.classList.add('teacher-card-hidden');
+    mainForm.classList.remove('teacher-card-hidden');
+});
+
+mainForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const name = document.getElementById('name').value.trim(); // Trim whitespace
+    const numSubjects = parseInt(document.getElementById('numSubjects').value);
+
+    if (!name || isNaN(numSubjects) || numSubjects < 1) {
+        alert('Please fill in all fields correctly');
+        return;
+    }
+
+    mainSubmit.disabled = true;
+
+    try {
+        const response = await fetch('/submit_main', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, numSubjects })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text(); // Get raw text for debugging
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+
+        const result = await response.json();
+        teacherName = name;
+        const subjectInputsDiv = document.getElementById('subjectInputs');
+        subjectInputsDiv.innerHTML = '';
+
+        for (let i = 1; i <= numSubjects; i++) {
+            const label = document.createElement('label');
+            label.className = 'teacher-card-label';
+            label.setAttribute('for', `subject${i}`);
+            label.textContent = `Subject ${i}:`;
+            const input = document.createElement('input');
+            input.className = 'teacher-card-input';
+            input.type = 'text';
+            input.id = `subject${i}`;
+            input.name = `subject${i}`;
+            input.required = true;
+            subjectInputsDiv.appendChild(label);
+            subjectInputsDiv.appendChild(input);
+        }
+
+        setTimeout(() => {
+            subjectForm.classList.remove('teacher-card-hidden');
+            mainForm.classList.add('teacher-card-hidden');
+            mainSubmit.disabled = false;
+        }, 300);
+    } catch (error) {
+        console.error('Main form submission error:', error);
+        alert(`Failed to submit main form: ${error.message}`);
+        mainSubmit.disabled = false;
+    }
+});
+
+subjectForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const subjectInputs = document.querySelectorAll('#subjectInputs .teacher-card-input');
+    const subjects = Array.from(subjectInputs).map(input => input.value.trim());
+    const allFilled = subjects.every(subject => subject !== '');
+
+    if (!allFilled) {
+        alert('Please fill in all subject fields');
+        return;
+    }
+
+    subjectSubmit.disabled = true;
+
+    try {
+        const response = await fetch('/submit_subject', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: teacherName, subjects })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to update subjects: ${errorText}`);
+        }
+
+        const result = await response.json();
+        setTimeout(() => {
+            subjectForm.classList.add('teacher-card-hidden');
+            cardContent.classList.remove('teacher-card-hidden');
+            alert(`Subjects updated successfully!\nSubjects: ${subjects.join(', ')}`);  // Updated message
+            subjectSubmit.disabled = false;
+        }, 300);
+    } catch (error) {
+        console.error('Subject form submission error:', error);
+        alert(error.message);
+        subjectSubmit.disabled = false;
+    }
+});
+</script>
+{% endblock body %}
